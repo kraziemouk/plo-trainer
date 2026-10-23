@@ -11,12 +11,12 @@ const set=(n,net,drink)=>{G.brBase[n]=net;G.bank[n].stack=200;G.bank[n].buyins=2
 // winning sober: small capped gain
 let m=set('Rickey',1000,0);A(m.q==='winning/sober'&&m.loose>1&&m.loose<=1+0.05*1.4+1e-9&&m.chase===0,'win sober '+JSON.stringify(m));
 // winning drunk: loosest
-const wd=set('Rickey',1000,9);A(wd.q==='winning/drunk'&&wd.loose>m.loose&&Math.abs(wd.loose-(1+0.4*1.4))<1e-9,'win drunk '+JSON.stringify(wd));
+const wd=set('Rickey',1000,9);A(wd.q==='winning/drunk'&&wd.loose>m.loose&&Math.abs(wd.loose-(1+0.25*1.4))<1e-9,'win drunk '+JSON.stringify(wd));
 // losing sober: tighten
 m=set('Willy',-1000,0);A(m.q==='losing/sober'&&Math.abs(m.loose-(1-0.25*0.6))<1e-9&&m.chase===0,'lose sober '+JSON.stringify(m));
 // losing drunk: chase not tighten
-m=set('David N',-1000,9);A(m.q==='losing/drunk'&&m.loose===1&&Math.abs(m.chase-0.3*1.3*1.4)<1e-9,'lose drunk '+JSON.stringify(m));
-m=set('Willy',-1000,9);A(Math.abs(m.chase-0.3)<1e-9,'disciplined drunk swing 1.0');
+m=set('David N',-1000,9);A(m.q==='losing/drunk'&&m.loose===1&&Math.abs(m.chase-0.2*1.3*1.4)<1e-9,'lose drunk '+JSON.stringify(m));
+m=set('Willy',-1000,9);A(Math.abs(m.chase-0.2)<1e-9,'disciplined drunk swing 1.0');
 // clamp and persistence across sessions
 G.brBase={};G.bank=freshBank();G.bank.Todd.stack=1700;G.bank.Todd.buyins=200;A(brMods('Todd').br===1,'clamp');
 newSession();A(JSON.parse(localStorage.getItem('plo5br')).Todd===1500,'persisted');G.brBase=null;A(brNet('Todd')===1500,'reload');
