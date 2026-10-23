@@ -10,14 +10,14 @@ flush();G.speed=0;gInit();let acts=0,mr=0,allinEvents=0,maxSeen=0;
 const conserve=()=>{const b=bankNets();const st=b.reduce((a,x)=>a+x.stack,0),bi=b.reduce((a,x)=>a+x.buyins,0);A(st===bi,"conservation "+st+" vs "+bi);};
 for(let h=0;h<120;h++){
   const before=Object.fromEntries(bankNets().map(x=>[x.name,{...x}]));
-  if(gNewHand()==="broke"){const b0=bankOf("Mouk").buyins;mookRebuy(5000);mr++;A(bankOf("Mouk").buyins<=G.MAXBI,"mouk spend cap");if(b0<G.MAXBI)A(gNewHand()!=="broke","rebuy");else break;}
-  for(const x of bankNets()){if(x.buyins>before[x.name].buyins)A(x.stack<=G.MAXBI||G.seats.some(s=>s.name===x.name&&s.stack<=G.MAXBI),"cap at add "+x.name);}
+  if(gNewHand()==="broke"){const b0=bankOf("Mouk").buyins;mookRebuy(5000);mr++;A(bankOf("Mouk").buyins<=(bankOf("Mouk").cap||G.MAXBI),"mouk spend cap");if(b0<(bankOf("Mouk").cap||G.MAXBI))A(gNewHand()!=="broke","rebuy");else break;}
+  for(const x of bankNets()){if(x.buyins>before[x.name].buyins)A(x.stack<=(x.cap||G.MAXBI)||G.seats.some(s=>s.name===x.name&&s.stack<=(x.cap||G.MAXBI)),"cap at add "+x.name);}
   flush();let g=0;while(!G.handOver&&g++<80){const lg=legal(0);A(lg.maxTo<=G.seats[0].bet+G.seats[0].stack,"PL cap");els.gAmt=lg.canRaise?{value:String(lg.maxTo)}:undefined;uAct(['call','raise','call','fold','check'][acts++%5]);flush();}
   A(G.handOver,"over");A(G.seats.every(s=>s.stack>=0),"neg");conserve();
   allinEvents+=G.log.filter(l=>/all-in\\)/.test(l)).length;
   const won=G.lastWon.reduce((a,b)=>a+b,0),put=G.seats.reduce((a,s)=>a+s.total,0);A(won===put,"pot");
   for(const x of bankNets())maxSeen=Math.max(maxSeen,x.stack);
-  if(h%25===0&&bankOf("Mouk").stack<G.MAXBI){mookRebuy(99999);A(bankOf("Mouk").buyins<=2000,"spend cap");}
+  if(h%25===0&&bankOf("Mouk").stack<G.MAXBI){mookRebuy(99999);A(bankOf("Mouk").buyins<=(bankOf("Mouk").cap||2000),"spend cap (3000 once Ship it unlocked)");}
 }
 const nets=bankNets();A(nets.reduce((a,x)=>a+x.net,0)===0,"nets zero");
 console.log("STACKS: 200 hands, conservation OK every hand, cap OK. Mouk rebuys",mr,"maxStackSeen",maxSeen);
