@@ -27,7 +27,7 @@ input,select{background:var(--bg);color:var(--fg);border:1px solid #8886;border-
 .pc.slot{background:#ffffff14;border:1px dashed #fff5;box-shadow:none}
 .seatT{position:absolute;transform:translate(-50%,-50%);text-align:center;z-index:2;width:150px}
 .seatT .tag{background:#111c;color:#fff;border:2px solid #555;border-radius:10px;padding:3px 6px;font-size:13px}
-.seatT .stack{color:#ffd54a;font-weight:700}.seatT .blurb{display:none}.seatT:hover .blurb{display:block;color:#ccc;font-size:11px}
+.seatT .stack{color:#ffd54a;font-weight:700}.seatT .blurb{display:none}@media (hover:hover) and (pointer:fine){.seatT:hover .blurb{display:block;color:#ccc;font-size:11px;position:absolute;top:100%;left:50%;transform:translateX(-50%);width:220px;white-space:normal;background:#000d;padding:4px 6px;border-radius:6px;z-index:9;pointer-events:none}}
 .seatT.me .tag{border-color:var(--acc);background:#0b2a55e6}.seatT.me{width:250px}.seatT.me .hcards{white-space:nowrap}
 .seatT.fold{opacity:.4}.seatT.act .tag{border-color:#ffd54a;box-shadow:0 0 12px #ffd54a}.seatT.thinking .tag{border-color:orange;box-shadow:0 0 14px orange}
 .hcards{min-height:34px;margin-bottom:2px}
@@ -80,10 +80,12 @@ button.sm{padding:4px 9px;font-size:12px;background:#555;margin:0}button.sm.deal
 @keyframes cdeal{from{transform:translate(var(--dx,0),var(--dy,0)) scale(.6);opacity:.2}to{transform:none;opacity:1}}
 @keyframes cflip{0%{transform:perspective(400px) rotateY(90deg);filter:brightness(.3) hue-rotate(200deg)}100%{transform:perspective(400px) rotateY(0)}}
 @media (prefers-reduced-motion:reduce){.pc.anim-deal,.pc.anim-flip{animation:none!important}}
-.abar.act3.endbar .b-deal{background:#27ae60}.abar.act3.endbar .topup{background:#d4a017;color:#1a1a1a;min-width:0}.abar.act3.endbar .b-replay{background:#5a6573;color:#fff}
+.abar.act3.endbar .tuslot{flex:1 1 0;min-height:var(--act-h);visibility:hidden}.abar.act3.endbar .b-deal{background:#27ae60}.abar.act3.endbar .topup{background:#d4a017;color:#1a1a1a;min-width:0}.abar.act3.endbar .b-replay{background:#5a6573;color:#fff}
 .street:has(.winstrip){display:block!important;opacity:1}.winstrip{display:inline-block;background:#000b;color:#ffd54a;font-weight:700;border:1px solid #ffd54a88;border-radius:14px;padding:3px 12px;font-size:14px;animation:winin .3s ease-out}
 @keyframes winin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
 .potchip{position:fixed;width:18px;height:18px;border-radius:50%;background:radial-gradient(circle,#fff 0 25%,#d32f2f 26% 60%,#fff 61% 68%,#d32f2f 69%);z-index:40;pointer-events:none}
+#gTable .seatT .meters{z-index:8;pointer-events:auto}#gTable .mt{touch-action:manipulation;pointer-events:auto;-webkit-tap-highlight-color:transparent}#gTable .mt::before{content:"";position:absolute;inset:calc((100% - 34px)/2)}
+@media (orientation:portrait){.seatT.me .meters.mR,.seatT.me .meters.mL{left:auto;right:6px;margin:0}}
 .sheet.small{font-size:13px}.sheet.small h2{font-size:15px}.sheet.small section{padding:8px 10px;margin:6px 0;box-shadow:none}.sheet details>summary{font-size:12px;color:var(--mut);padding:5px 0;border-bottom:1px solid #8883}
 .sheethead{display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--card);padding:4px 0;z-index:1}
 .sheet table{font-size:11px}.sheet button{font-size:12px;padding:5px 9px}
@@ -635,7 +637,7 @@ function loadStacks(){G.seats.forEach((s,i)=>{const b=bankOf(s.name);steamOn(s.n
     s.stack=b.stack;});}
 function saveStacks(){for(const s of G.seats)bankOf(s.name).stack=s.stack;PH.set("plo5bank",G.bank);}
 function mookRebuy(amt){const b=bankOf(HERO());const a=addChips(b,amt===undefined?G.START:amt);if(a>0){if(b.stack-a<G.BB)b.rebuys++;else b.topups++;}PH.set("plo5bank",G.bank);if(G.seats[0])G.seats[0].stack=b.stack;return a;}
-function newSession(){G.sessionStart=Date.now();PH.set("plo5sessStart",G.sessionStart);G.bank=freshBank();PH.set("plo5bank",G.bank);for(const s of G.seats)s.net=0;}
+function newSession(){try{brFold();}catch(e){}G.sessionStart=Date.now();PH.set("plo5sessStart",G.sessionStart);G.bank=freshBank();PH.set("plo5bank",G.bank);for(const s of G.seats)s.net=0;}
 function bankNets(){bankOf(HERO());return Object.entries(G.bank).map(([n,b])=>({name:n,stack:b.stack,buyins:b.buyins,rebuys:b.rebuys,topups:b.topups||0,net:b.stack-b.buyins}));}
 // ===== Drink & tilt meters (Yum, David N) =====
 const METERED=[HERO(),...PROFILES.map(p=>p.name)];
@@ -664,6 +666,10 @@ function meterShowdown(won,vals){G.seats.forEach((s,j)=>{const m=G.meters&&G.met
   if(lost>=40){m.drink=cap9(m.drink+1);m.tilt=cap9(m.tilt+1);if(vals&&!s.folded&&catOf(vals[j])>=4)m.tilt=cap9(m.tilt+1);}
   if(vals&&!s.folded&&won[j]===0&&(s.maxEq||0)>=0.6)m.tilt=cap9(m.tilt+2); // bad beat: was >=60% on flop/turn // bad beat: lost at showdown with a straight+
   else if(-lost>=40)m.tilt=cap9(m.tilt-1);});saveMeters();}
+// Seat meter taps: delegated pointerup (touch-safe even if the table re-renders mid-tap) + click fallback for keyboard/mouse.
+if(typeof document!=="undefined"&&document.addEventListener){let lastPU=0;const hit=e=>{const t=e.target&&e.target.closest?e.target.closest("#gTable .mt[data-n]"):null;return t;};
+  document.addEventListener("pointerup",e=>{const t=hit(e);if(!t)return;e.preventDefault();e.stopPropagation();lastPU=Date.now();bump(t.dataset.n,t.dataset.k);},true);
+  document.addEventListener("click",e=>{const t=hit(e);if(!t)return;e.preventDefault();e.stopPropagation();if(Date.now()-lastPU<600)return;bump(t.dataset.n,t.dataset.k);},true);}
 window.bump=(n,k)=>{const m=G.meters[n];m[k]=m[k]>=9?0:m[k]+1;saveMeters();if(typeof renderTable==="function")renderTable();};
 function effProf(s){const p=Object.assign({},s.prof);if(p.lateShift)moukShift(p);const d=drinkLvl(s.name),t=tiltLvl(s.name);p.size=1;p.rand=0;p.pred=false;p.wide=1;
   if(d>=1){p.size=1.15;p.tight-=0.02;}
@@ -697,7 +703,7 @@ function tiltGate(i,d){const s=G.seats[i];if(!s.prof||!G.meters||!G.meters[s.nam
     const outs=G.street>0&&G.board.length<5?quickOuts(s.hand,G.board):0;const chaserAdj=s.prof.name==="Yum"?(outs>=8?2:0.3):1;
     if(G.rngNext()<TILT_LIGHT[t]*sty*chaserAdj){L(`${s.name} is steaming…`);return ["raise",lg.maxTo];}}
   return d;}
-function botDecide(i){const s=G.seats[i];if(s&&!s.isUser&&!s.remote&&steamOn(s.name)){const lg=legal(i);if(lg.canRaise)return ["raise",lg.maxTo];return lg.toCall>0?["call"]:["check"];}return tiltGate(i,botDecideVs(i));}
+function botDecide(i){const s=G.seats[i];if(s&&s.name==="Empty"){const lg=legal(i);return lg.toCall>0?["fold"]:["check"];}if(s&&!s.isUser&&!s.remote&&steamOn(s.name)){const lg=legal(i);if(lg.canRaise)return ["raise",lg.maxTo];return lg.toCall>0?["call"]:["check"];}return tiltGate(i,botDecideVs(i));}
 function botDecideVs(i){const r=vsRule(i);if(!r)return botDecideBase(i);
   VS_WIDE=r.callWider||0;let d;try{d=botDecideBase(i);}finally{VS_WIDE=0;}
   const s=G.seats[i],lg=legal(i);
@@ -769,7 +775,73 @@ function botDecideBase(i){const d=botDecideCore(i),s=G.seats[i],p=effProf(s),lg=
     if(st&&st.hands>=10&&st.vpip/st.hands>0.4){const odds=lg.toCall/(lg.pot+lg.toCall);if(rangeEquity(i,120)>odds*0.9)return ["call"];}}
   // Willy sizes up value when convinced
   if(p.valueSize&&d[0]==="raise"&&G.street>0&&handClass(s)>=2){return ["raise",Math.min(lg.maxTo,Math.max(lg.minTo,Math.round(d[1]*p.valueSize)))];}
-  return d;}
+  return potLayer(i,d);}
+// Pot-size layer (owner request). Small pots (<=20): call wide, fold only trash ~20-30% (tighter profiles fold a bit more).
+// Larger pots: project rank among live hands at the river via range-based runouts; continue only as projected best/2nd with pot odds.
+function rankProj(i,iters){const me=G.seats[i],opps=G.seats.map((s,j)=>j).filter(j=>j!==i&&!G.seats[j].folded);if(!opps.length)return {p1:1,p2:1,eq:1,n:0};
+  const deck=[];const known=new Set([...me.hand,...G.board]);for(let c=0;c<52;c++)if(!known.has(c))deck.push(c);let p1=0,p2=0,eq=0;
+  for(let it=0;it<iters;it++){const used=new Set(known),vals=[];for(const j of opps){const hh=sampleFor(G.seats[j].name,posOf(j),deck,G.board,used);hh.forEach(c=>used.add(c));vals.push(hh);}
+    const B=G.board.slice();while(B.length<5){const c=deck[Math.floor(Math.random()*deck.length)];if(!used.has(c)){used.add(c);B.push(c);}}
+    const mv=evalOmaha(me.hand,B);let above=0,ties=0;for(const hh of vals){const v=evalOmaha(hh,B);if(v>mv)above++;else if(v===mv)ties++;}
+    if(above===0){p1++;eq+=1/(ties+1);}if(above<=1)p2++;}
+  return {p1:p1/iters,p2:p2/iters,eq:eq/iters,n:opps.length};}
+function isTrash(s){if(G.street===0)return pfScore(s.hand)<0.45;return handClass(s)<1&&(G.board.length>=5||quickOuts(s.hand,G.board)<4);}
+// Core loop: observe -> value -> commit/release each street. Each hand a bot may "break the loop" (chase, loose calls/bets).
+// Base by players in: 7-8 50%, 5-6 33%, 3-4 25%, 2 10%; re-rolled when the count drops. x1.3 loose, x0.7 tight; tilt/drink raise it.
+const LB_LOOSE={"Rickey":1,"David N":1},LB_TIGHT={"L":1,"Jamal":1,"Milton":1,"Rich":1};
+function stackMult(s){const st=Math.max(1,(s.stack||0)+(s.total||0));return Math.max(0.7,Math.min(1.5,1+0.25*Math.log2(st/200)));}
+function outlier(s){G.lb=G.lb&&G.lb.hand===G.handNo?G.lb:{hand:G.handNo};const k="o:"+s.name;if(G.lb[k]===undefined){G.lb[k]=G.rngNext()<0.03;G.outStats=G.outStats||{hands:0,out:0};G.outStats.hands++;if(G.lb[k])G.outStats.out++;}return G.lb[k];}
+// Bankroll layer: cumulative net across sessions (localStorage "plo5br", per player name), plus the current session's bank net.
+function brLoad(){if(G.brBase)return G.brBase;let o=null;try{o=JSON.parse(localStorage.getItem("plo5br")||"null");}catch(e){}G.brBase=(o&&typeof o==="object")?o:{};if(G.brBase.Ricky!==undefined&&G.brBase.Rickey===undefined){G.brBase.Rickey=G.brBase.Ricky;}if(G.brBase.Milty!==undefined&&G.brBase.Milton===undefined)G.brBase.Milton=G.brBase.Milty;if(G.brBase["Yum Yum"]!==undefined&&G.brBase.Yum===undefined)G.brBase.Yum=G.brBase["Yum Yum"];return G.brBase;}
+function brFold(){const B=brLoad();if(G.bank)for(const n in G.bank){const b=G.bank[n];if(b&&isFinite(b.stack-b.buyins))B[n]=(+B[n]||0)+(b.stack-b.buyins);}try{localStorage.setItem("plo5br",JSON.stringify(B));}catch(e){}}
+function brNet(n){const B=brLoad(),b=G.bank&&G.bank[n];return (+B[n]||0)+(b?b.stack-b.buyins:0);}
+const BR_SWING={"Rickey":1.4,"Todd":1.4,"David N":1.3,"Yum":0.8,"Ram":1.0},BR_DISC={"Willy":1,"Rich":1,"Milton":1,"L":1,"Jamal":1};
+function brMods(n){const br=Math.max(-1,Math.min(1,brNet(n)/1000));const m=G.meters&&G.meters[n];let drunk=m?Math.min(1,m.drink/9):0;if(n==="Ram")drunk=Math.min(1,drunk/0.8);
+  const sober=drunk<0.33,sw=BR_DISC[n]?(sober?0.6:1.0):(BR_SWING[n]??1.0);let loose=1,chase=0;
+  if(br>0){let g=0.15*br+(sober?0:0.25*br*drunk);if(sober)g=Math.min(g,0.05);loose=1+g*sw;}
+  else if(br<0){if(sober)loose=Math.max(0.5,1-0.25*-br*sw);else chase=0.3*-br*drunk*sw*(n==="David N"?1.4:1);}
+  return {br,drunk,loose,chase,q:(br>=0?"winning":"losing")+"/"+(sober?"sober":"drunk")};}
+function lbBase(n){return n>=7?0.5:n>=5?0.33:n>=3?0.25:0.1;}
+function loopBreak(i){const s=G.seats[i],n=G.seats.filter(x=>!x.folded&&x.hand&&x.hand.length).length;G.lb=G.lb&&G.lb.hand===G.handNo?G.lb:{hand:G.handNo};G.lbStats=G.lbStats||{};
+  const cur=G.lb[s.name];if(cur&&cur.n===n)return cur.on;if(cur&&cur.n<n)return cur.on;
+  let pb=lbBase(n)*(LB_LOOSE[s.name]?1.3:LB_TIGHT[s.name]?0.7:1);let t=0,dl=0;try{t=tiltLvl(s.name)||0;dl=rawDrinkLvl(s.name)||0;}catch(e){}{const bm=brMods(s.name);pb=Math.min(0.6,pb*(1+0.15*(t+dl))*stackMult(s)*bm.loose+bm.chase);}
+  const on=G.rngNext()<pb;G.lb[s.name]={n,on};const k=n>=7?"7-8":n>=5?"5-6":n>=3?"3-4":"2";const st=G.lbStats[k]=G.lbStats[k]||{rolls:0,breaks:0};st.rolls++;if(on)st.breaks++;return on;}
+// Sizing = stackBase(stack) * strengthMult, +/-10% jitter, clamp [0.25,1.0] pot and pot-limit max.
+// stackBase = clamp(0.5*(1+0.35*log2(stack/200)),0.33,1). strength: nuts 1.35, strong 1.1, marginal/draw 0.75, bluff 1.1-1.35 (70%) else 0.75.
+function sizeFrac(s){const st=Math.max(1,(s.stack||0)+(s.bet||0));return Math.max(0.33,Math.min(1,0.5*(1+0.35*Math.log2(st/200))));}
+function strengthOf(s){if(G.street===0){const p=pfScore(s.hand);return p>=0.8?"nuts":p>=0.6?"strong":p>=0.4?"marginal":"bluff";}
+  const hc=handClass(s);if(hc>=3)return "nuts";if(hc===2)return "strong";if(hc===1)return "marginal";return G.board.length<5&&quickOuts(s.hand,G.board)>=6?"marginal":"bluff";}
+function strengthMult(k){if(k==="nuts")return 1.35;if(k==="strong")return 1.1;if(k==="marginal")return 0.75;return G.rngNext()<0.7?1.1+G.rngNext()*0.25:0.75;}
+function potLayer(i,d){const s=G.seats[i];if(s.isUser||s.remote||!s.prof||s.name==="Empty"||s.stack<=0)return d;const out=potLayerInner(i,d);if(out[0]!=="raise")return out;
+  const lg=legal(i);if(!lg.canRaise)return lg.toCall>0?["call"]:["check"];const sk=strengthOf(s),strong=sk==="nuts"||sk==="strong";
+  if(out[1]>=lg.maxTo&&strong)return ["raise",lg.maxTo];
+  const f=Math.max(0.25,Math.min(1,sizeFrac(s)*Math.max(0.8,Math.min(1.3,brMods(s.name).loose))*strengthMult(sk)*(0.9+G.rngNext()*0.2))),to=Math.min(lg.maxTo,Math.max(lg.minTo,Math.round(s.bet+lg.toCall+f*(lg.pot+lg.toCall))));
+  const st=s.stack+s.bet,bk=st<=100?"<=100":st<=250?"101-250":st<=500?"251-500":">500";G.sizeStats=G.sizeStats||{};const fr=(to-s.bet-lg.toCall)/Math.max(1,lg.pot+lg.toCall);
+  for(const key of [bk,sk,sk+"@"+bk]){const z=G.sizeStats[key]=G.sizeStats[key]||{n:0,sum:0};z.n++;z.sum+=fr;}
+  return ["raise",to];}
+function potLayerInner(i,d){const s=G.seats[i];if(s.isUser||s.remote)return d;let d2=potLayerCore(i,d);const lg=legal(i),bm=brMods(s.name),sm=Math.max(0.5,Math.min(1.8,stackMult(s)*bm.loose));
+  if(G.street>0&&d2[0]==="fold"&&lg.toCall>0&&bm.chase>0&&G.rngNext()<bm.chase*(s.name==="Yum"?1.3:1))d2=["call"]; // losing+drunk: call down / chase
+  // stack-size range width: deep stacks widen, short stacks tighten
+  if(G.street===0&&lg.toCall>0){const sc=pfScore(s.hand);if(d2[0]==="fold"&&sm>1&&sc>=0.55-(sm-1)*0.3&&G.rngNext()<(sm-1))d2=["call"];else if(d2[0]==="call"&&sm<1&&sc<0.5&&G.rngNext()<(1-sm))d2=["fold"];}
+  if(outlier(s)){const r0=G.rngNext();if(d2[0]==="fold"&&lg.toCall>0)return ["call"];if(d2[0]==="check"&&lg.canRaise&&r0<0.4)return ["raise",Math.min(lg.maxTo,Math.max(lg.minTo,s.bet+lg.pot))];return d2;}
+  if(G.street===0||!loopBreak(i))return d2;
+  const r=G.rngNext()/Math.max(0.7,sm*0.9+0.1);
+  if(d2[0]==="fold"&&lg.toCall>0){if(lg.toCall<=0.35*(lg.pot+lg.toCall)&&r<0.6)return ["call"];return d2;}
+  if((d2[0]==="check")&&lg.canRaise&&r<0.25){return ["raise",Math.min(lg.maxTo,Math.max(lg.minTo,s.bet+Math.round(lg.pot*0.5)))];}
+  if(d2[0]==="call"&&lg.canRaise&&r<0.1){return ["raise",Math.min(lg.maxTo,Math.max(lg.minTo,s.bet+lg.toCall+Math.round((lg.pot+lg.toCall)*0.5)))];}
+  return d2;}
+function potLayerCore(i,d){const s=G.seats[i],p=effProf(s),lg=legal(i);const tight=Math.max(0.15,Math.min(0.45,p.tight??0.3));const r=G.rngNext();
+  if(lg.pot<=20){if(lg.toCall<=0||d[0]!=="fold")return d;if(G.street===0&&lg.toCall>2*G.BB)return d;
+    const sm=stackMult(s);if(isTrash(s)){const foldP=Math.min(0.5,(0.2+(tight-0.15)/0.3*0.1)/sm);return r<foldP?d:["call"];}
+    return r<Math.min(0.97,(0.95-tight*0.35)*Math.sqrt(sm))?["call"]:d;}
+  const pr=rankProj(i,90),odds=lg.toCall>0?lg.toCall/(lg.pot+lg.toCall):0,hu=pr.n===1;
+  const best=hu?pr.eq>=0.5:pr.p1>=Math.max(0.34,1/(pr.n+1)+0.1),second=!best&&(hu||pr.p2>=0.6);
+  const value=()=>{const to=Math.min(lg.maxTo,Math.max(lg.minTo,s.bet+lg.toCall+Math.round((lg.pot+lg.toCall)*0.7)));return ["raise",to];};
+  if(lg.toCall<=0){if(best&&hu&&d[0]==="check"&&lg.canRaise)return value();if(d[0]==="raise"&&!best&&!second&&r<0.6)return ["check"];return d;}
+  if(best){const capR=(G.raises||0)>=2&&pr.eq<0.75;if(d[0]==="raise"&&!capR)return d;if(hu&&lg.canRaise&&!capR)return value();return ["call"];}
+  if(second){const cont=hu?Math.max(0.7,Math.min(0.8,0.8-(tight-0.15)/0.3*0.1)):0.75;if(pr.eq>=odds*0.9&&r<cont)return ["call"];
+    if(lg.toCall<=0.1*lg.pot)return ["call"];return ["fold"];}
+  if(lg.toCall<=0.08*lg.pot&&pr.eq>=odds)return ["call"];return ["fold"];}
 function botDecideCore(i){
   const s=G.seats[i],p=effProf(s),lg=legal(i),pot=lg.pot,R=G.rngNext();
   const nudge=Math.max(-0.045,Math.min(0.02,((p.tight??0.3)-0.3)*0.35)),agg=p.agg??0.5,bl=p.bluff??0.05,ch=p.chase??1;
@@ -926,7 +998,7 @@ function tableHTML(st){ // st: {seats,board,button,pot,toAct,thinking,over,revea
     const prof=G.seats[i]&&G.seats[i].prof&&!s.isUser?G.seats[i].prof:null;
     h+=`<div class="seatT ${s.folded?'fold':''} ${st.toAct===i?'act':''} ${st.thinking===i?'thinking':''} ${s.isUser?'me':''} ${STEAM[s.name]&&G.meters&&G.meters[s.name]&&G.meters[s.name].drink>=STEAM[s.name].drink&&G.meters[s.name].tilt>=STEAM[s.name].tilt?'ship':''} ${!s.isUser&&up&&s.hand.length&&s.hand[0]>=0&&!s.folded?'rev':''}" style="left:${x}%;top:${y}%">
       <div class="hcards">${s.folded&&!(st.revealAll&&st.showFolded)?'':(!s.isUser&&!(up&&s.hand[0]>=0)?(s.hand.length?`<span class="mini"><span class="pc back sm"></span></span>`:''):s.hand.map(c=>pcard(c,up,!s.isUser)).join(""))}</div>
-      <div class="tag" ${prof?`title="${prof.blurb}"`:''}><b>${s.name}</b>${G.meters&&G.meters[s.name]?`<span class="meters m${side}"><button class="mt" title="Drinks (tap +1, wraps at 9)" onclick="event.stopPropagation();bump('${s.name}','drink')">🥂<i>${G.meters[s.name].drink}</i></button><button class="mt crack" title="Tilt (tap +1, wraps at 9)" onclick="event.stopPropagation();bump('${s.name}','tilt')">🫏<i>${G.meters[s.name].tilt}</i></button></span>`:''}${s.allin?' <em>ALL-IN</em>':''}<div class="stack">${s.stack}</div>${prof?`<div class="blurb">${prof.blurb}</div>`:''}${st.thinking===i?'<div class="dots">thinking<span>.</span><span>.</span><span>.</span></div>':''}</div></div>`;
+      <div class="tag" ${prof?`title="${prof.blurb}"`:''}><b>${s.name}</b>${G.meters&&G.meters[s.name]?`<span class="meters m${side}"><button class="mt" data-n="${s.name}" data-k="drink" title="Drinks (tap +1, wraps at 9)">🥂<i>${G.meters[s.name].drink}</i></button><button class="mt crack" data-n="${s.name}" data-k="tilt" title="Tilt (tap +1, wraps at 9)">🫏<i>${G.meters[s.name].tilt}</i></button></span>`:''}${s.allin?' <em>ALL-IN</em>':''}<div class="stack">${s.stack}</div>${prof?`<div class="blurb">${prof.blurb}</div>`:''}${st.thinking===i?'<div class="dots">thinking<span>.</span><span>.</span><span>.</span></div>':''}</div></div>`;
     if(s.bet)h+=`<div class="bet" style="left:${bx}%;top:${by}%">${chips(s.bet)}</div>`;
     const mx=i===0?bx+14:(x+bx)/2+4,my=i===0?by:(y+by)/2;if(i===st.button)h+=`<div class="marker dealer" style="left:${mx}%;top:${my}%">D</div>`;
     else if(i===sb||i===bb)h+=`<div class="marker blind" style="left:${mx}%;top:${my}%">${i===sb?'SB':'BB'}</div>`;});
@@ -950,7 +1022,7 @@ G.ui={think(i){renderTable();},street(){renderTable();setTimeout(dash,0);},
   if(pa.callAny){setTimeout(()=>uAct(lg.toCall>0?"call":"check"),0);return;}
   if(pa.check&&lg.toCall===0){setTimeout(()=>uAct("check"),0);return;}
   renderActBar(lg,false);},
- end(){renderTable();try{potSlide();}catch(e){}$("gCtl").innerHTML=`<div class="abar act3 endbar"><button class="b-deal" onclick="gNewHand()">Deal Hand</button><span class="tuslot"></span><button class="b-replay" onclick="openReplay(G.hands.length-1)">▶ Replay Hand</button></div>`;renderSession();renderHandList();}};
+ end(){renderTable();try{potSlide();}catch(e){}$("gCtl").innerHTML=`<div class="abar act3 endbar"><span class="tuslot"></span><button class="b-deal" onclick="gNewHand()">Deal Hand</button><button class="b-replay" onclick="openReplay(G.hands.length-1)">▶ Replay Hand</button></div>`;renderSession();renderHandList();}};
 window.uAct=t=>{const h=gHint(0,500);const to=$("gAmt")?+$("gAmt").value:0;const r=gUserAct(t,to,h);
   $("gHint").innerHTML=`<div class="hintbox ${r.ok?'ok':'bad'}">${r.ok?"✔ Matches hint":"✘ Deviates from hint"} — you: <b>${r.action}</b> · heuristic "solver-style" hint (not real solver output): <b>${h.act.toUpperCase()}</b> — ${h.why}`+
    (!r.ok?` <span class="note">(est. loss ≈ ${r.loss.toFixed(1)} chips)</span> <button onclick="retry(${G.session.length-1})">↺ Retry this decision</button>`:"")+`</div>`;
