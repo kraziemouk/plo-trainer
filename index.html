@@ -80,6 +80,10 @@ button.sm{padding:4px 9px;font-size:12px;background:#555;margin:0}button.sm.deal
 @keyframes cdeal{from{transform:translate(var(--dx,0),var(--dy,0)) scale(.6);opacity:.2}to{transform:none;opacity:1}}
 @keyframes cflip{0%{transform:perspective(400px) rotateY(90deg);filter:brightness(.3) hue-rotate(200deg)}100%{transform:perspective(400px) rotateY(0)}}
 @media (prefers-reduced-motion:reduce){.pc.anim-deal,.pc.anim-flip{animation:none!important}}
+.abar.act3.endbar .b-deal{background:#27ae60}.abar.act3.endbar .topup{background:#d4a017;color:#1a1a1a;min-width:0}.abar.act3.endbar .b-replay{background:#5a6573;color:#fff}
+.street:has(.winstrip){display:block!important;opacity:1}.winstrip{display:inline-block;background:#000b;color:#ffd54a;font-weight:700;border:1px solid #ffd54a88;border-radius:14px;padding:3px 12px;font-size:14px;animation:winin .3s ease-out}
+@keyframes winin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.potchip{position:fixed;width:18px;height:18px;border-radius:50%;background:radial-gradient(circle,#fff 0 25%,#d32f2f 26% 60%,#fff 61% 68%,#d32f2f 69%);z-index:40;pointer-events:none}
 .sheet.small{font-size:13px}.sheet.small h2{font-size:15px}.sheet.small section{padding:8px 10px;margin:6px 0;box-shadow:none}.sheet details>summary{font-size:12px;color:var(--mut);padding:5px 0;border-bottom:1px solid #8883}
 .sheethead{display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--card);padding:4px 0;z-index:1}
 .sheet table{font-size:11px}.sheet button{font-size:12px;padding:5px 9px}
@@ -616,6 +620,12 @@ function cardAnims(){if(typeof window==="undefined"||!window.matchMedia||!docume
       else if(me)set(el,"anim-flip",st+dur);});}
   T.querySelectorAll(".board .pc.spr").forEach((el,i)=>{if(ANIM.bt[i])set(el,"anim-flip",ANIM.bt[i]);});
   if(now-ANIM.t0<2*dur+300)setTimeout(()=>{try{if(!RV)cardAnims();}catch(e){}},dur);}
+// Pot chips slide from the pot to each winner's seat at hand end.
+function potSlide(){if(typeof document==="undefined"||!document.querySelector||!document.createElement||G.speed===0)return;if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const T=$("gTable"),p=T&&T.querySelector&&T.querySelector(".potlbl");if(!p)return;const pr=p.getBoundingClientRect(),seats=T.querySelectorAll(".seatT");
+  (G.winIdx||[]).forEach(j=>{const st=seats[j];if(!st)return;const sr=st.getBoundingClientRect();for(let k=0;k<3;k++){const c=document.createElement("div");c.className="potchip";c.style.left=(pr.left+pr.width/2-9+k*4)+"px";c.style.top=(pr.top+pr.height/2-9)+"px";document.body.appendChild(c);
+    const dx=sr.left+sr.width/2-(pr.left+pr.width/2),dy=sr.top+sr.height/2-(pr.top+pr.height/2);if(c.animate)c.animate([{transform:"translate(0,0)",opacity:1},{transform:`translate(${dx}px,${dy}px)`,opacity:.9}],{duration:450,delay:k*60,easing:"ease-in-out",fill:"forwards"});setTimeout(()=>c.remove(),700);}});
+  sfx("win");}
 function davidSteam(n){return steamOn(n);}
 function steamOn(n){const m=G.meters&&G.meters[n],u=STEAM[n];const on=!!u&&!!m&&m.drink>=u.drink&&m.tilt>=u.tilt;if(on&&G.bank&&G.bank[n]){G.bank[n].cap=3000;if(!G.bank[n].ship){G.bank[n].ship=1;try{L(`${n}: Ship it mode enabled 🥂`);}catch(e){}try{shipBanner(n);}catch(e){}}}return on;}
 function botRebuyAmt(n){if(davidSteam(n)){const b=G.bank&&G.bank[n];return b?remaining(b):G.MAXBI;}const r=G.bank&&G.bank[n]?remaining(G.bank[n]):G.MAXBI;return Math.min(r,G.START*rebuyMult(n));}
@@ -827,7 +837,7 @@ function gShowdown(){
       else{const b=Math.max(...elig.map(j=>vals[j]));const ws=elig.filter(j=>vals[j]===b);ws.forEach((j,k)=>won[j]+=Math.floor(part/ws.length)+(k===0?part%ws.length:0));}
       prev=lv;}
     won.forEach((w,j)=>{if(w)L(`${G.seats[j].name} wins ${w}.`);});}
-  const u=G.seats[0];G.result=`${HERO()} ${won[0]-u.total>=0?"won":"lost"} ${Math.abs(won[0]-u.total)} chips this hand.`;
+  G.winText=G.seats.map((s,j)=>won[j]>0?`${s.name} wins ${won[j]}`:null).filter(Boolean).join(" · ");G.winIdx=G.seats.map((s,j)=>won[j]>0?j:-1).filter(j=>j>=0);const u=G.seats[0];G.result=`${HERO()} ${won[0]-u.total>=0?"won":"lost"} ${Math.abs(won[0]-u.total)} chips this hand.`;
   G.seats.forEach((s,j)=>{s.stack+=won[j];s.net+=won[j]-s.total;});
   if(!G.practice){try{statsHandEnd(won);}catch(e){}saveStacks();G.lastRec=recordHand(won);meterShowdown(won,live.length>1?G.seats.map(s=>s.folded?-1:evalOmaha(s.hand,G.board)):null);}if(won[0]>0)sfx("win");G.handOver=true;G.lastWon=won;autosave();(G.hands=G.hands||[]).push({no:G.handNo,frames:G.frames.slice(),result:G.result});G.ui&&G.ui.end();return "end";
 }
@@ -921,7 +931,7 @@ function tableHTML(st){ // st: {seats,board,button,pot,toAct,thinking,over,revea
     const mx=i===0?bx+14:(x+bx)/2+4,my=i===0?by:(y+by)/2;if(i===st.button)h+=`<div class="marker dealer" style="left:${mx}%;top:${my}%">D</div>`;
     else if(i===sb||i===bb)h+=`<div class="marker blind" style="left:${mx}%;top:${my}%">${i===sb?'SB':'BB'}</div>`;});
   return h+`</div>`;}
-function liveState(){const show=G.handOver&&liveSeats().length>1;return {seats:G.seats,board:G.board,button:G.button,pot:potTotal(),toAct:G.handOver?-1:G.toAct,thinking:G.thinking,revealAll:show,label:G.handOver?"":STREETS[G.street]};}
+function liveState(){const show=G.handOver&&liveSeats().length>1;return {seats:G.seats,board:G.board,button:G.button,pot:potTotal(),toAct:G.handOver?-1:G.toAct,thinking:G.thinking,revealAll:show,label:G.handOver?(G.winText?`<span class="winstrip">${G.winText}</span>`:""):STREETS[G.street]};}
 function renderTable(){if(RV||!G.seats.length)return;$("gTable").innerHTML=tableHTML(liveState());try{cardAnims();}catch(e){}
   $("gInfo").innerHTML=`Hand #${G.handNo} · ${G.wait&&G.wait.length?"Waitlist: "+G.wait.join(", "):""} · Session net: <b class="${G.seats[0].net>=0?'good':'bad'}">${G.seats[0].net>=0?"+":""}${G.seats[0].net}</b>`;
   $("gLog").textContent=G.log.slice(-40).join("\n");$("gLog").scrollTop=1e9;}
@@ -940,7 +950,7 @@ G.ui={think(i){renderTable();},street(){renderTable();setTimeout(dash,0);},
   if(pa.callAny){setTimeout(()=>uAct(lg.toCall>0?"call":"check"),0);return;}
   if(pa.check&&lg.toCall===0){setTimeout(()=>uAct("check"),0);return;}
   renderActBar(lg,false);},
- end(){renderTable();$("gCtl").innerHTML=`<div class="abar"><b>${G.result}</b><button onclick="gNewHand()">Deal next hand</button><button onclick="openReplay(G.hands.length-1)">▶ Replay this hand</button></div>`;renderSession();renderHandList();}};
+ end(){renderTable();try{potSlide();}catch(e){}$("gCtl").innerHTML=`<div class="abar act3 endbar"><button class="b-deal" onclick="gNewHand()">Deal Hand</button><span class="tuslot"></span><button class="b-replay" onclick="openReplay(G.hands.length-1)">▶ Replay Hand</button></div>`;renderSession();renderHandList();}};
 window.uAct=t=>{const h=gHint(0,500);const to=$("gAmt")?+$("gAmt").value:0;const r=gUserAct(t,to,h);
   $("gHint").innerHTML=`<div class="hintbox ${r.ok?'ok':'bad'}">${r.ok?"✔ Matches hint":"✘ Deviates from hint"} — you: <b>${r.action}</b> · heuristic "solver-style" hint (not real solver output): <b>${h.act.toUpperCase()}</b> — ${h.why}`+
    (!r.ok?` <span class="note">(est. loss ≈ ${r.loss.toFixed(1)} chips)</span> <button onclick="retry(${G.session.length-1})">↺ Retry this decision</button>`:"")+`</div>`;
@@ -996,7 +1006,7 @@ window.chipDlg=(broke)=>{const b=bankOf(HERO()),max=remaining(b);if(max<=0){if(b
   $("gCtl").innerHTML=`<div class="abar"><b>${broke?HERO()+" is busted — rebuy":"Top up "+HERO()}</b> <span class="sizer"><input type="range" id="biAmt" min="${mn}" max="${max}" step="10" value="${mn}" oninput="biL.textContent=this.value"><span id="biL">${mn}</span></span><button class="raise" onclick="mookRebuy(+biAmt.value);${broke?'gNewHand()':'renderTable();G.ui.end()'}">${broke?"Rebuy &amp; deal":"Add chips"}</button>`+
   (broke?`<button class="fold" onclick="if(confirm('End this session? Stacks reset for the next one.')){const n=bankNets().find(x=>x.name===HERO());newSession();$('gCtl').innerHTML='<div class=abar><b>Session ended — '+HERO()+' net '+(n.net>=0?'+':'')+n.net+' chips.</b><button onclick=gNewHand()>Start new session</button></div>';}">End session</button>`:`<button onclick="G.ui.end()">Cancel</button>`)+`</div>`;};
 G.ui.broke=()=>chipDlg(true);
-{const _e=G.ui.end;G.ui.end=function(){_e();if(bankOf(HERO()).stack<G.BB)G.ui.broke();else if(remaining(bankOf(HERO()))>0){const ab=document.querySelector?document.querySelector("#gCtl .abar"):null;if(ab)ab.insertAdjacentHTML("beforeend",`<button class="q" onclick="chipDlg(false)">Top up</button>`);}};}
+{const _e=G.ui.end;G.ui.end=function(){_e();if(bankOf(HERO()).stack<G.BB)G.ui.broke();else if(remaining(bankOf(HERO()))>0){const ab=document.querySelector?(document.querySelector("#gCtl .tuslot")||document.querySelector("#gCtl .abar")):null;if(ab){const sl=ab.classList.contains("tuslot");ab.insertAdjacentHTML(sl?"afterend":"beforeend",`<button class="q topup" onclick="chipDlg(false)">Top up</button>`);if(sl)ab.remove();}}};}
 function netTable(){return `<h4>Session stacks &amp; net (buy-in ${G.START}; max ${G.MAXBI.toLocaleString()} total spend per player tonight)</h4><table><tr><th>Player</th><th>Stack</th><th>Bought in</th><th>Spent</th><th>Rebuys</th><th>Top-ups</th><th>Net</th></tr>${bankNets().sort((a,b)=>b.net-a.net).map(x=>`<tr><td>${x.name}</td><td>${x.stack}</td><td>${x.buyins}</td><td>${x.buyins} / ${G.MAXBI.toLocaleString()}</td><td>${x.rebuys}</td><td>${x.topups}</td><td class="${x.net>=0?'good':'bad'}">${x.net>=0?'+':''}${x.net}</td></tr>`).join("")}</table>`;}
 {const _rs2=renderSession;renderSession=function(){_rs2();$("sess").innerHTML=netTable()+$("sess").innerHTML;};}
 {const _rh=renderHist;window.renderHist=renderHist=function(pg){_rh(pg);$("histTot").innerHTML+=netTable();};}
