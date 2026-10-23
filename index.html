@@ -87,7 +87,7 @@ button.sm{padding:4px 9px;font-size:12px;background:#555;margin:0}button.sm.deal
 .mt.crack{background:linear-gradient(135deg,transparent 46%,#ff5252 47%,#ff5252 53%,transparent 54%),#ffffff14}
 </style></head><body class="app"><div id="app">
 <div id="topbar"><b class="ttl">♠ PLO5 Trainer</b><span id="gInfo" class="note"></span><span class="tb">
-<button class="sm" onclick="tg('drawer')">☰ Learn</button><button class="sm" onclick="tg('pLog')">Log</button><button class="sm" onclick="tg('pRep')">Replay</button><button class="sm" onclick="renderHist(0);tg('pHist')">History</button><button class="sm" onclick="tg('pOpt')">⚙</button><button class="sm" id="theme">◐</button><button class="sm deal" id="gStart">Deal</button></span></div>
+<button class="sm" onclick="tg('drawer')">☰ Learn</button><button class="sm" onclick="tg('pLog')">Log</button><button class="sm" onclick="tg('pRep')">Replay</button><button class="sm" onclick="renderHist(0);tg('pHist')">History</button><button class="sm" onclick="tg('pOpt')">⚙</button><button class="sm" id="theme">◐</button><button class="sm" id="muteBtn" onclick="toggleMute()">🔊</button><button class="sm" id="voiceBtn" onclick="toggleVoice()" title="All-in voice">🗣</button><button class="sm deal" id="gStart">Deal</button></span></div>
 <div id="stage"><div id="gTable" class="tablewrap"></div></div>
 <div id="hud"><button id="hudTog" onclick="document.getElementById('hud').classList.toggle('open')">Odds ▴</button><div id="hudBody"><div id="gHint"></div><aside id="dash" class="dash"><p class="note">Deal a hand — Mouk's live equity appears here.</p></aside></div></div>
 <div id="bottom"><div id="gReplay" class="rvbar" style="display:none"><button onclick="stepReplay('pst')">⏮</button><button onclick="stepReplay('prev')">◀</button><button onclick="stepReplay('next')">▶</button><button onclick="stepReplay('nst')">⏭</button><span id="gRvMsg"></span><button onclick="closeReplay()">✕</button></div><div id="gCtl"><div class="abar"><button class="raise" onclick="gStart.click()">Deal first hand</button></div></div></div>
@@ -114,7 +114,7 @@ Trials per cell: <select id="tblN"><option>1000</option><option selected>2500</o
 <p><button class="sm" onclick="doExport()">Export save file</button> <button class="sm" onclick="histImp.click()">Import save file</button><input type="file" id="histImp" accept=".json,application/json" style="display:none" onchange="doImport(this)"> <button class="sm" style="background:#9e2a2a" onclick="if(confirm('Clear all saved hand history and leak stats?')){clearHist();renderHist(0);renderSession();}">Clear history</button></p>
 <div id="histTbl"></div></div>
 <div id="pOpt" class="sheet small"><div class="sheethead"><b>Options</b><button class="sm" onclick="tg('pOpt')">✕</button></div>
-<p>Sits out: <select id="gSitOut"></select></p><p>Think-time: <select id="gSpeed"><option value="0">Instant</option><option value="0.5">Fast</option><option value="1" selected>Realistic</option></select></p><p><label><input type="checkbox" id="gWeighted" checked> Weight opponents to loose range</label></p><p><label><input type="checkbox" id="gKeep"> Keep tilt &amp; drink between page loads</label></p><p>Equity trials: <select id="gIters"><option>800</option><option selected>2000</option><option>5000</option></select></p></div>
+<p><button class="sm" onclick="if(confirm('Start a new session? All stacks reset to fresh buy-ins.')){newSession();renderTable();renderSession();}">New session</button></p><p>Sits out: <select id="gSitOut"></select></p><p>Think-time: <select id="gSpeed"><option value="0">Instant</option><option value="0.5">Fast</option><option value="1" selected>Realistic</option></select></p><p><label><input type="checkbox" id="gWeighted" checked> Weight opponents to loose range</label></p><p><label><input type="checkbox" id="gKeep"> Keep tilt &amp; drink between page loads</label></p><p>Equity trials: <select id="gIters"><option>800</option><option selected>2000</option><option>5000</option></select></p></div>
 <script>// ==== CORE (shared) ====
 const RANKS="23456789TJQKA",SUITS="shdc",SUITSYM={s:"♠",h:"♥",d:"♦",c:"♣"};
 function parseCard(s){s=s.trim();if(s.length!==2)return -1;const r=RANKS.indexOf(s[0].toUpperCase()),u=SUITS.indexOf(s[1].toLowerCase());return r<0||u<0?-1:r*4+u;}
@@ -268,7 +268,7 @@ function pfScore(h){ // rough 0..1 PLO5 preflop playability
   return Math.max(0,Math.min(1,s/3.2));
 }
 function quickOuts(h,b){if(b.length>=5)return 0;const used=new Set([...h,...b]);const cur=Math.max(catOf(evalOmaha(h,b)),3);let n=0;for(let c=0;c<52;c++)if(!used.has(c)&&catOf(evalOmaha(h,b.concat([c])))>cur)n++;return n;}
-const G={SB:1,BB:2,START:200,seats:[],button:0,board:[],deck:[],street:0,log:[],handNo:0,ui:null,user:0,
+const G={SB:1,BB:2,START:200,MAXBI:2000,seats:[],button:0,board:[],deck:[],street:0,log:[],handNo:0,ui:null,user:0,
  handOver:true,history:[],sitOutSetting:-1,speed:0,rs:(Date.now()>>>0),session:[],snap:null,
  rngNext(){let t=(this.rs=(this.rs+0x6D2B79F5)>>>0);t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;}};
 const PROFILES=[
@@ -290,8 +290,11 @@ function nextIdx(i){return (i+1)%8;}
 function L(m){G.log.push(m);if(G.frames)G.frames.push({msg:m,street:G.street,board:(G.board||[]).slice(),button:G.button,pot:potTotal(),seats:G.seats.map(s=>({name:s.name,stack:s.stack,bet:s.bet,total:s.total,folded:s.folded,allin:s.allin,hand:s.hand.slice(),isUser:s.isUser}))});}
 function putIn(s,amt){amt=Math.min(amt,s.stack);s.stack-=amt;s.bet+=amt;s.total+=amt;if(s.stack===0)s.allin=true;return amt;}
 function gNewHand(){
-  for(const s of G.seats){s.stack=G.START;Object.assign(s,{hand:[],folded:false,allin:false,bet:0,total:0});}
-  G.frames=[];G.handNo++;G.sitOut=G.sitOutSetting>=0?G.sitOutSetting:(G.handNo-1)%8;{let k=0;for(let i=1;i<8;i++){if(k===G.sitOut)k++;G.seats[i].prof=PROFILES[k];G.seats[i].name=PROFILES[k].name;k++;}}L(`${PROFILES[G.sitOut].name} sits out this hand.`);meterNewHand();for(const s of G.seats)s.calledPre=false;G.button=nextIdx(G.button);G.board=[];G.street=0;G.history=[];G.handOver=false;G.aggressor=-1;G.result="";
+  G.log=G.log.slice(-300);
+  if(G.preRetry){const pr=G.preRetry;G.preRetry=null;G.practice=false;gRestore(pr);}
+  if(bankOf("Mouk").stack<G.BB){G.ui&&G.ui.broke&&G.ui.broke();return "broke";}
+  for(const s of G.seats){Object.assign(s,{hand:[],folded:false,allin:false,bet:0,total:0});}
+  G.frames=[];G.handNo++;G.sitOut=G.sitOutSetting>=0?G.sitOutSetting:(G.handNo-1)%8;{let k=0;for(let i=1;i<8;i++){if(k===G.sitOut)k++;G.seats[i].prof=PROFILES[k];G.seats[i].name=PROFILES[k].name;k++;}}L(`${PROFILES[G.sitOut].name} sits out this hand.`);meterNewHand();loadStacks();sfx("deal");for(const s of G.seats){s.calledPre=false;s.maxEq=0;}G.button=nextIdx(G.button);G.board=[];G.street=0;G.history=[];G.handOver=false;G.aggressor=-1;G.result="";
   G.seed=(G.rngNext()*4294967296)>>>0;G.deck=[...Array(52).keys()];for(let a=51;a>0;a--){const b=Math.floor(G.rngNext()*(a+1));[G.deck[a],G.deck[b]]=[G.deck[b],G.deck[a]];}let k=0;
   for(const s of G.seats)s.hand=G.deck.slice(k,k+=5);G.deckPos=k;
   const sb=nextIdx(G.button),bb=nextIdx(sb);
@@ -305,7 +308,8 @@ function legal(i){const s=G.seats[i];const toCall=Math.min(G.curBet-s.bet,s.stac
   const minTo=Math.min(G.curBet+G.minRaise,s.bet+s.stack);
   const canRaise=s.stack>toCall&&maxTo>G.curBet&&G.seats.some((o,j)=>j!==i&&canAct(o)||(j!==i&&!o.folded&&o.bet>s.bet&&false));
   return {toCall,minTo,maxTo,canRaise:canRaise&&G.seats.filter((o,j)=>j!==i&&canAct(o)).length>0,pot};}
-function gAct(i,type,to){ // type: fold|check|call|raise (bet = raise when curBet==bet)
+function gAct(i,type,to){gActCore(i,type,to);const s=G.seats[i];const last=G.log[G.log.length-1]||"";sfx(s.allin&&/all-in/.test(last)?"allin":/folds/.test(last)?"fold":/raises|bets/.test(last)?(/raises/.test(last)?"raise":"bet"):"tap");autosave();}
+function gActCore(i,type,to){ // type: fold|check|call|raise (bet = raise when curBet==bet)
   const s=G.seats[i],lg=legal(i);
   if(type==="check"&&lg.toCall>0)type="call";
   if(type==="raise"&&!lg.canRaise)type=lg.toCall>0?"call":"check";
@@ -326,13 +330,14 @@ function gAdvance(){ // run bots until user's turn or hand end
       for(const s of G.seats)s.bet=0;G.curBet=0;G.minRaise=G.BB;G.street++;
       const n=G.street===1?3:1;G.board=G.board.concat(G.deck.slice(G.deckPos,G.deckPos+n));G.deckPos+=n;
       L(`*** ${STREETS[G.street]}: ${G.board.map(cardStr).join(" ")} (pot ${potTotal()})`);
+      if(G.street<=2&&liveSeats().length>1)trackEq();
       G.need=new Set(G.seats.map((s,i)=>i).filter(i=>canAct(G.seats[i])));
       if(G.need.size<=1){G.need.clear();} // everyone all-in: run it out
-      G.toAct=nextIdx(G.button);G.ui&&G.ui.street();continue;}
+      G.toAct=nextIdx(G.button);sfx("deal");G.ui&&G.ui.street();continue;}
     let i=G.toAct;let c=0;while(!(canAct(G.seats[i])&&(G.need.has(i)||G.seats[i].bet<G.curBet))&&c<9){i=nextIdx(i);c++;}
     if(c>=9){G.need.clear();continue;}
     G.toAct=i;
-    if(G.seats[i].isUser){G.ui?G.ui.prompt(legal(i)):0;return "user";}
+    if(G.seats[i].isUser){autosave();G.ui?G.ui.prompt(legal(i)):0;return "user";}
     if(G.speed>0&&G.ui){G.thinking=i;G.ui.think(i);const tk=effProf(G.seats[i]).think*G.speed;setTimeout(()=>{G.thinking=-1;const [t,to]=botDecide(i);gAct(i,t,to);gAdvance();},tk);return "wait";}
     const [t,to]=botDecide(i);gAct(i,t,to);
   }
@@ -353,7 +358,12 @@ function recordHand(won){
   const u=G.seats[0],dec=G.session.filter(r=>r.hand===G.handNo&&!r.saved);
   const rec={id:PH.sid+":"+G.handNo,gno,t:new Date().toISOString(),opp:G.seats.slice(1).map(s=>s.name),
     winners:G.seats.map((s,j)=>won[j]>0?s.name:null).filter(Boolean),net:won[0]-u.total,pot:won.reduce((a,b)=>a+b,0),
-    hand:u.hand.map(cardStr).join(""),board:G.board.map(cardStr).join(""),
+    hand:u.hand.map(cardStr).join(""),board:G.board.map(cardStr).join(""),button:G.button,
+    shown:G.seats.map(s=>(s.isUser||(!s.folded&&G.seats.filter(x=>!x.folded).length>1))?s.hand.map(cardStr).join(""):null),
+    names:G.seats.map(s=>s.name),startStacks:G.seats.map((s,j)=>s.stack-won[j]+s.total),endStacks:G.seats.map(s=>s.stack+0),won:won.slice(),
+    log:G.frames.map(f=>[f.street,f.msg]),
+    fr:G.frames.map(f=>({m:f.msg,st:f.street,b:f.board.length,p:f.pot,s:f.seats.map(x=>[x.stack,x.bet,x.folded?1:0,x.allin?1:0])})),
+    snaps:G.session.filter(r=>r.hand===G.handNo&&!r.ok&&r.snap).map(r=>{const sn={...r.snap,log:[],frames:[],history:[]};return {st:r.street,a:r.action,h:r.hint,snap:sn};}),
     dec:dec.map(r=>({st:r.street,a:r.action,h:r.hint,ok:r.ok,l:+r.loss.toFixed(1)}))};
   let H=histAll().filter(x=>x.id!==rec.id);H.push(rec);if(H.length>HCAP)H=H.slice(H.length-HCAP);PH.set("plo5hist",H);
   let Lk=leaksAll().filter(x=>x.id!==rec.id);for(const r of dec)Lk.push({id:rec.id,st:r.street,ty:r.type,ok:r.ok,l:+r.loss.toFixed(1)});if(Lk.length>LCAP)Lk=Lk.slice(Lk.length-LCAP);PH.set("plo5leaks",Lk);
@@ -363,8 +373,51 @@ function mergeSave(obj){if(!obj||!Array.isArray(obj.hist))throw new Error("Not a
   const m=new Map(histAll().map(r=>[r.id,r]));for(const r of obj.hist)if(r&&r.id)m.set(r.id,r);let H=[...m.values()].sort((a,b)=>a.t<b.t?-1:1);if(H.length>HCAP)H=H.slice(H.length-HCAP);
   const lm=new Map();for(const x of leaksAll().concat(obj.leaks||[]))lm.set(x.id+"|"+x.st+"|"+x.ty+"|"+x.l+"|"+x.ok,x);
   PH.set("plo5hist",H);PH.set("plo5leaks",[...lm.values()].slice(-LCAP));PH.set("plo5gno",Math.max(PH.get("plo5gno",0),obj.gno||0,...H.map(r=>r.gno||0)));return H.length;}
-function exportSave(){return JSON.stringify({app:"plo5-trainer",v:1,exported:new Date().toISOString(),gno:PH.get("plo5gno",0),hist:histAll(),leaks:leaksAll(),meters:G.meters});}
+function exportSave(){return JSON.stringify({app:"plo5-trainer",v:1,bank:G.bank,exported:new Date().toISOString(),gno:PH.get("plo5gno",0),hist:histAll(),leaks:leaksAll(),meters:G.meters});}
 function clearHist(){const s=PH.ls();if(s){s.removeItem("plo5hist");s.removeItem("plo5leaks");s.removeItem("plo5gno");}}
+
+
+// ===== Sound (synthesized Web Audio) + all-in voice =====
+const SND={ctx:null,mute:false,voice:true};
+try{if(typeof localStorage!=="undefined"){SND.mute=localStorage.getItem("plo5mute")==="1";SND.voice=localStorage.getItem("plo5voice")!=="0";}}catch(e){}
+function audioInit(){if(SND.ctx||typeof window==="undefined")return;const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;try{SND.ctx=new AC();}catch(e){}}
+function tone(f,d,type,vol,delay,slideTo){const c=SND.ctx;if(!c)return;const t=c.currentTime+(delay||0);const o=c.createOscillator(),g=c.createGain();o.type=type||"sine";o.frequency.setValueAtTime(f,t);if(slideTo)o.frequency.exponentialRampToValueAtTime(slideTo,t+d);
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol||0.2,t+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t+d);o.connect(g).connect(c.destination);o.start(t);o.stop(t+d+0.05);}
+function noise(d,vol,delay,hp,lp){const c=SND.ctx;if(!c)return;const t=c.currentTime+(delay||0);const n=Math.floor(c.sampleRate*d),b=c.createBuffer(1,n,c.sampleRate),a=b.getChannelData(0);for(let i=0;i<n;i++)a[i]=(Math.random()*2-1)*(1-i/n);
+  const s=c.createBufferSource();s.buffer=b;const f=c.createBiquadFilter();f.type="bandpass";f.frequency.setValueAtTime(hp||2000,t);if(lp)f.frequency.exponentialRampToValueAtTime(lp,t+d);const g=c.createGain();g.gain.value=vol||0.2;s.connect(f).connect(g).connect(c.destination);s.start(t);}
+function sayAllIn(){if(SND.mute||!SND.voice)return;try{if(typeof speechSynthesis==="undefined"||typeof SpeechSynthesisUtterance==="undefined")return;const u=new SpeechSynthesisUtterance("fuck it");u.rate=1;u.pitch=0.9;speechSynthesis.speak(u);}catch(e){}}
+function sfx(k){if(k==="allin")sayAllIn();if(SND.mute||!SND.ctx)return;try{
+  if(k==="bet"){tone(2600,0.08,"triangle",0.12);tone(3400,0.06,"triangle",0.08,0.05);}
+  else if(k==="raise"){for(let j=0;j<4;j++){tone(2400+300*j,0.07,"triangle",0.12,j*0.045);}noise(0.12,0.08,0,5000);}
+  else if(k==="tap"){tone(180,0.07,"sine",0.25);noise(0.04,0.06,0,800);}
+  else if(k==="fold"){noise(0.28,0.18,0,3000,400);}
+  else if(k==="allin"){tone(110,0.9,"sawtooth",0.12,0,55);tone(220,0.6,"square",0.05,0.05,110);for(let j=0;j<7;j++)tone(2200+200*j,0.07,"triangle",0.1,0.1+j*0.05);}
+  else if(k==="deal"){noise(0.06,0.15,0,4000,1500);}
+  else if(k==="win"){[523,659,784,1047].forEach((f,j)=>tone(f,0.35,"sine",0.15,j*0.09));}
+}catch(e){}}
+if(typeof window!=="undefined"&&typeof window.addEventListener==="function"){const go=()=>{audioInit();if(SND.ctx&&SND.ctx.state==="suspended")SND.ctx.resume();};window.addEventListener("pointerdown",go);window.addEventListener("keydown",go);}
+// ===== Autosave full session state =====
+function autosave(){if(G.practice||typeof PH==="undefined")return;const s=gSnapshot();s.sitOutSetting=G.sitOutSetting;s.session=G.session.map(r=>{const x={...r};delete x.snap;return x;});s.saved=new Date().toISOString();PH.set("plo5state",s);}
+function resumeState(){const s=PH.get("plo5state",null);if(!s||!s.seats||!s.seats.length)return false;if(!G.seats.length)gInit();gRestore(s);G.session=s.session||[];G.thinking=-1;G.sitOutSetting=s.sitOutSetting??-1;
+  for(const st of G.seats){const p=PROFILES.find(p=>p.name===st.name);st.prof=st.isUser?null:p||null;}return true;}
+// ===== Persistent session stacks (chips, blinds 1/2; buy-in/rebuy default 200; no adding chips past 2,000) =====
+const BUYIN_STYLE={"David N":{base:800,cover:1.0},"Rick":{base:600,cover:0.9},"Willy":{base:300,cover:0.75},"Rich":{base:250,cover:0.5},"Todd":{base:250,cover:0.5},"Yum Yum":{base:250,cover:0.5},"Milty":{base:200,cover:0},"L":{base:200,cover:0}};
+function freshBank(){const b={};for(const n of ["Mouk",...PROFILES.map(p=>p.name)])b[n]={stack:0,buyins:0,rebuys:0,topups:0};
+  for(const n in b){const amt=n==="Mouk"?G.START:Math.min(G.MAXBI,(BUYIN_STYLE[n]||{base:G.START}).base);b[n].stack=amt;b[n].buyins=amt;}return b;}
+function bankOf(n){if(!G.bank)G.bank=PH.get("plo5bank",null)||freshBank();if(!G.bank[n])G.bank[n]={stack:G.START,buyins:G.START,rebuys:0,topups:0};const b=G.bank[n];b.topups=b.topups||0;return b;}
+function addChips(b,amt){amt=Math.max(0,Math.min(Math.round(amt),G.MAXBI-b.stack));b.stack+=amt;b.buyins+=amt;return amt;}
+function buyTarget(name,others){const st=BUYIN_STYLE[name]||{base:G.START,cover:0.5};const t=G.meters&&G.meters[name]?tiltLvl(name):0;
+  const big=Math.max(0,...others);return Math.min(G.MAXBI,Math.max(st.base+100*t,Math.round(st.cover*(1+0.1*t)*big)));}
+function loadStacks(){const seated=G.seats.map(s=>bankOf(s.name).stack);
+  G.seats.forEach((s,i)=>{const b=bankOf(s.name);if(s.isUser){s.stack=b.stack;return;}
+    const others=seated.filter((x,j)=>j!==i),tgt=buyTarget(s.name,others),big=Math.max(...others);
+    if(b.stack<G.BB){const a=addChips(b,Math.max(G.START,tgt));b.rebuys++;L(`${s.name} is busted and rebuys for ${a}.`);if(G.meters&&G.meters[s.name])G.meters[s.name].tilt=cap9(G.meters[s.name].tilt+1);}
+    else if(b.stack<tgt&&big>=Math.max(600,1.5*b.stack)){const a=addChips(b,tgt-b.stack);if(a>0){b.topups++;L(`${s.name} tops up ${a} (stack ${b.stack}) to cover the big stack.`);}}
+    s.stack=b.stack;});}
+function saveStacks(){for(const s of G.seats)bankOf(s.name).stack=s.stack;PH.set("plo5bank",G.bank);}
+function mookRebuy(amt){const b=bankOf("Mouk");const a=addChips(b,amt===undefined?G.START:amt);if(a>0){if(b.stack-a<G.BB)b.rebuys++;else b.topups++;}PH.set("plo5bank",G.bank);if(G.seats[0])G.seats[0].stack=b.stack;return a;}
+function newSession(){G.bank=freshBank();PH.set("plo5bank",G.bank);for(const s of G.seats)s.net=0;}
+function bankNets(){bankOf("Mouk");return Object.entries(G.bank).map(([n,b])=>({name:n,stack:b.stack,buyins:b.buyins,rebuys:b.rebuys,topups:b.topups||0,net:b.stack-b.buyins}));}
 // ===== Drink & tilt meters (Yum Yum, David N) =====
 const METERED=["Yum Yum","David N"];
 function freshMeters(){const m={};for(const n of METERED)m[n]={drink:0,tilt:0,dealt:0};return m;}
@@ -375,8 +428,15 @@ const cap9=x=>Math.max(0,Math.min(9,x));
 function drinkLvl(n){const d=G.meters[n]?G.meters[n].drink:0;return d>=7?3:d>=4?2:d>=2?1:0;}
 function tiltLvl(n){const t=G.meters[n]?G.meters[n].tilt:0;return t>=9?3:t>=6?2:t>=3?1:0;}
 function meterNewHand(){for(const n of METERED){const m=G.meters[n];if(PROFILES[G.sitOut].name===n){m.drink=cap9(m.drink-1);continue;}m.dealt++;if(m.dealt%5===0)m.drink=cap9(m.drink+1);}saveMeters();}
+function trackEq(){ // exact equity of metered players vs actual live hands over all remaining runouts
+  const live=G.seats.filter(s=>!s.folded),rest=G.deck.slice(G.deckPos),need=5-G.board.length;const tr=live.filter(s=>G.meters&&G.meters[s.name]);if(!tr.length)return;
+  const sc=new Map(tr.map(s=>[s,0]));let n=0;
+  const run=B=>{n++;let best=-1,ws=[];for(const s of live){const v=evalOmaha(s.hand,B);if(v>best){best=v;ws=[s];}else if(v===best)ws.push(s);}for(const s of ws)if(sc.has(s))sc.set(s,sc.get(s)+1/ws.length);};
+  if(need===1)for(const c of rest)run(G.board.concat([c]));else for(let a=0;a<rest.length;a++)for(let b=a+1;b<rest.length;b++)run(G.board.concat([rest[a],rest[b]]));
+  for(const s of tr)s.maxEq=Math.max(s.maxEq||0,sc.get(s)/n);}
 function meterShowdown(won,vals){G.seats.forEach((s,j)=>{const m=s.prof&&G.meters[s.name];if(!m)return;const lost=s.total-won[j];
-  if(lost>=40){m.drink=cap9(m.drink+1);m.tilt=cap9(m.tilt+1);if(vals&&!s.folded&&catOf(vals[j])>=4)m.tilt=cap9(m.tilt+1);} // bad beat: lost at showdown with a straight+
+  if(lost>=40){m.drink=cap9(m.drink+1);m.tilt=cap9(m.tilt+1);if(vals&&!s.folded&&catOf(vals[j])>=4)m.tilt=cap9(m.tilt+1);}
+  if(vals&&!s.folded&&won[j]===0&&(s.maxEq||0)>=0.6)m.tilt=cap9(m.tilt+2); // bad beat: was >=60% on flop/turn // bad beat: lost at showdown with a straight+
   else if(-lost>=40)m.tilt=cap9(m.tilt-1);});saveMeters();}
 window.bump=(n,k)=>{const m=G.meters[n];m[k]=m[k]>=9?0:m[k]+1;saveMeters();if(typeof renderTable==="function")renderTable();};
 function effProf(s){const p=Object.assign({},s.prof);const d=drinkLvl(s.name),t=tiltLvl(s.name);p.size=1;p.rand=0;p.pred=false;p.wide=1;
@@ -387,7 +447,38 @@ function effProf(s){const p=Object.assign({},s.prof);const d=drinkLvl(s.name),t=
   if(t>=2){p.bluff+=0.12;p.chase+=0.3;}
   if(t>=3){p.bluff+=0.15;p.wide*=1.3;p.over=true;}
   return p;}
-function botDecide(i){
+// ===== Relational behavior system =====
+// Add a pair by giving a profile vs:{"<Other name>":{whenFacingRaise:{shove:<0..1>,callWider:<0..1>,foldMore:<0..1>,note:"..."}}}
+function vsRule(i){const s=G.seats[i];if(!s.prof||!s.prof.vs||G.aggressor<0||G.aggressor===i)return null;const a=G.seats[G.aggressor];if(!a||a.folded)return null;
+  const r=s.prof.vs[a.name];if(!r||!r.whenFacingRaise)return null;if(G.curBet-s.bet<=0)return null;return {who:a.name,...r.whenFacingRaise};}
+let VS_WIDE=0;
+// ===== Tilt-gated all-ins (generic, any profile with a tilt meter) =====
+const TILT_JAM=[0,0.25,0.55,0.9],TILT_LIGHT=[0,0.05,0.15,0.35];
+function jamStyle(p){return p.name==="Yum Yum"?0.45:p.name==="David N"?1:0.7;} // Yum Yum the chaser: mostly jams draws, less often air
+function commits(s,to,pot){return to>=0.6*(s.bet+s.stack)||(s.bet+s.stack-to)<0.5*(pot+to);}
+function jamJustified(s,lg){const stack=s.bet+s.stack,spr=(stack-s.bet)/Math.max(1,lg.pot);
+  if(G.street===0)return pfScore(s.hand)>=0.7||spr<=1;
+  const cat=catOf(evalOmaha(s.hand,G.board)),outs=G.board.length<5?quickOuts(s.hand,G.board):0;
+  if(cat>=5||(cat>=4&&spr<=4))return true;if(cat>=3&&spr<=2)return true;if(outs>=13&&spr<=2)return true;if(cat>=2&&spr<=1)return true;return false;}
+function tiltGate(i,d){const s=G.seats[i];if(!s.prof||!G.meters||!G.meters[s.name])return d;
+  const lg=legal(i),t=tiltLvl(s.name),sty=jamStyle(s.prof),just=jamJustified(s,lg);
+  const isJam=d[0]==="raise"&&commits(s,Math.min(d[1],lg.maxTo),lg.pot);
+  if(isJam&&!just&&!(G.rngNext()<TILT_JAM[t]*sty)){ // light jam not allowed at this tilt level: downgrade
+    const small=Math.min(lg.maxTo,s.bet+lg.toCall+Math.round((lg.pot+lg.toCall)*0.5));
+    if(lg.canRaise&&!commits(s,small,lg.pot)&&G.rngNext()<0.4)return ["raise",small];
+    return lg.toCall>0?["call"]:["check"];}
+  if(!isJam&&!just&&t>0&&lg.canRaise&&d[0]!=="fold"){
+    const outs=G.street>0&&G.board.length<5?quickOuts(s.hand,G.board):0;const chaserAdj=s.prof.name==="Yum Yum"?(outs>=8?2:0.3):1;
+    if(G.rngNext()<TILT_LIGHT[t]*sty*chaserAdj){L(`${s.name} is steaming…`);return ["raise",lg.maxTo];}}
+  return d;}
+function botDecide(i){return tiltGate(i,botDecideVs(i));}
+function botDecideVs(i){const r=vsRule(i);if(!r)return botDecideBase(i);
+  VS_WIDE=r.callWider||0;let d;try{d=botDecideBase(i);}finally{VS_WIDE=0;}
+  const s=G.seats[i],lg=legal(i);
+  if(r.foldMore&&d[0]==="call"&&G.rngNext()<r.foldMore)d=["fold"];
+  if((d[0]==="call"||d[0]==="raise")&&r.shove&&G.rngNext()<r.shove){L(`${s.name} reacts to ${r.who}'s raise.`);d=lg.canRaise?["raise",lg.maxTo]:["call"];}
+  return d;}
+function botDecideBase(i){
   const s=G.seats[i],p=effProf(s),lg=legal(i),pot=lg.pot,R=G.rngNext();
   const sz=f=>s.bet+lg.toCall+Math.round((pot+lg.toCall)*Math.min(1,(p.over&&G.rngNext()<0.5?1:f)*p.size));
   if(p.rand&&G.rngNext()<p.rand){const opts=[lg.toCall>0?"fold":"check",lg.toCall>0?"call":"check"];if(lg.canRaise)opts.push("raise");const t=opts[Math.floor(G.rngNext()*opts.length)];return t==="raise"?["raise",sz(0.3+G.rngNext()*0.7)]:[t];}
@@ -409,7 +500,7 @@ function botDecide(i){
   if(lg.canRaise&&nutsOK&&made>=0.78&&R<p.agg)return ["raise",sz(1)];
   if(lg.canRaise&&R<p.bluff*0.3)return ["raise",sz(0.8)];
   if(p.nutReq>=4&&!nutsOK&&drawEq<0.45)return ["fold"];
-  const eqGuess=(p.wide||1)*Math.max(nutsOK?made*0.8:made*0.5,drawEq*p.chase*(p.math?1:1.0));
+  const eqGuess=(p.wide||1)*(1+VS_WIDE)*Math.max(nutsOK?made*0.8:made*0.5,drawEq*p.chase*(p.math?1:1.0));
   if(eqGuess>odds||(left>0&&outs>=8&&G.rngNext()<p.chase*0.25))return ["call"];
   return ["fold"];
 }
@@ -430,7 +521,7 @@ function gShowdown(){
     won.forEach((w,j)=>{if(w)L(`${G.seats[j].name} wins ${w}.`);});}
   const u=G.seats[0];G.result=`Mouk ${won[0]-u.total>=0?"won":"lost"} ${Math.abs(won[0]-u.total)} chips this hand.`;
   G.seats.forEach((s,j)=>{s.stack+=won[j];s.net+=won[j]-s.total;});
-  G.lastRec=recordHand(won);meterShowdown(won,live.length>1?G.seats.map(s=>s.folded?-1:evalOmaha(s.hand,G.board)):null);G.handOver=true;G.lastWon=won;(G.hands=G.hands||[]).push({no:G.handNo,frames:G.frames.slice(),result:G.result});G.ui&&G.ui.end();return "end";
+  if(!G.practice){saveStacks();G.lastRec=recordHand(won);meterShowdown(won,live.length>1?G.seats.map(s=>s.folded?-1:evalOmaha(s.hand,G.board)):null);}if(won[0]>0)sfx("win");G.handOver=true;G.lastWon=won;autosave();(G.hands=G.hands||[]).push({no:G.handNo,frames:G.frames.slice(),result:G.result});G.ui&&G.ui.end();return "end";
 }
 // hero equity vs active opponents (random or loose-weighted range)
 function heroEquity(iters,weighted,me){me=me||0;
@@ -447,7 +538,7 @@ function heroEquity(iters,weighted,me){me=me||0;
 }
 
 // ===== snapshots for replay =====
-function gSnapshot(){const o={};for(const k of ["seats","meters","frames","button","board","deck","deckPos","street","log","handNo","handOver","history","curBet","minRaise","toAct","aggressor","rs","result"])o[k]=JSON.parse(JSON.stringify(G[k]===undefined?null:G[k]));o.need=[...G.need];return o;}
+function gSnapshot(){const o={};for(const k of ["seats","meters","bank","sitOutSetting","sitOut","frames","button","board","deck","deckPos","street","log","handNo","handOver","history","curBet","minRaise","toAct","aggressor","rs","result"])o[k]=JSON.parse(JSON.stringify(G[k]===undefined?null:G[k]));o.need=[...G.need];return o;}
 function gRestore(o){for(const k in o)G[k]=JSON.parse(JSON.stringify(o[k]));G.need=new Set(o.need);}
 // ===== heuristic "solver-style" hint (NOT real solver output) =====
 function handType(i){const s=G.seats[i];if(G.street===0)return pfScore(s.hand)>0.45?"Strong preflop":"Weak/marginal preflop";
@@ -462,9 +553,11 @@ function gHint(i,iters){
     else if(ap.bluff>=0.25){eqA=Math.min(1,eq*1.15);note=` ${ap.name} bluffs a lot — calling a bit lighter is OK.`;}
     else if(ap.bluff<=0.02){eqA=eq*0.85;note=` ${ap.name} rarely bluffs — respect the bet.`;}
     const an=G.seats[G.aggressor].name,dl=drinkLvl(an),tl=tiltLvl(an);
+    for(const o of G.seats){if(o.isUser||o.folded||!o.prof||!o.prof.vs)continue;const vr=o.prof.vs[an];if(vr&&vr.whenFacingRaise)note+=" "+(vr.whenFacingRaise.note||`${o.name} reacts strongly to ${an}'s raises.`);}
     if(an==="Yum Yum"&&dl>=2)note+=` Yum Yum is drunk, but his big bets are still strong.`;
     else if(dl>=1){eqA=Math.min(1,eqA*(1+0.07*dl));note+=` ${an} is ${["","buzzed","drunk","hammered"][dl]} — his big bets are sloppy.`;}
-    if(tl>=1){eqA=Math.min(1,eqA*(1+0.05*tl));note+=` ${an} is on tilt — wider bluffs.`;}}
+    if(tl>=1){eqA=Math.min(1,eqA*(1+0.05*tl));note+=` ${an} is on tilt — wider bluffs.`;}
+    {const ag=G.seats[G.aggressor];if(G.meters&&G.meters[an]&&(ag.allin||commits(ag,ag.bet,lg.pot))){if(tl===0){eqA=eq*0.8;note=` ${an} isn't tilted, his shove means strength.`;}else note+=` ${an} is tilted (level ${tl}) — his shoves can be light.`;}}}
   if(lg.toCall===0){
     if(lg.canRaise&&eq>fair*1.6){act="raise";why=`Bet: ${(eq*100).toFixed(0)}% equity vs ${opp} opp is well above fair share ${(fair*100).toFixed(0)}% — build the pot.`;}
     else if(lg.canRaise&&nut>=13&&opp<=2){act="raise";why=`Semi-bluff: ${nut} strong outs and few opponents give fold equity plus a big draw.`;}
@@ -497,7 +590,7 @@ function gLeaks(){const by={street:{},type:{}};let n=0,m=0,loss=0;
 let curHint=null,lastLg=null,RV=null; // RV = replay viewer {h,k}
 const SEATPOS=[[50,98],[14,88],[1,52],[14,13],[50,2],[86,13],[99,52],[86,88]]; // % left/top of seat centers (0=Mouk bottom)
 const BETPOS=[[50,72],[27,70],[18,52],[27,32],[50,27],[73,32],[82,52],[73,70]];
-function pcard(c,up,small){if(!up)return `<span class="pc back${small?' sm':''}"></span>`;const s=SUITS[c&3];return `<span class="pc ${s==='h'||s==='d'?'red':''}${small?' sm':''}"><b>${RANKS[c>>2]==='T'?'10':RANKS[c>>2]}</b><i>${SUITSYM[s]}</i></span>`;}
+function pcard(c,up,small){if(!up||c<0||c===undefined||c===null)return `<span class="pc back${small?' sm':''}"></span>`;const s=SUITS[c&3];return `<span class="pc ${s==='h'||s==='d'?'red':''}${small?' sm':''}"><b>${RANKS[c>>2]==='T'?'10':RANKS[c>>2]}</b><i>${SUITSYM[s]}</i></span>`;}
 function chips(n){if(!n)return"";const k=Math.min(5,Math.ceil(Math.log2(n+1)/1.6));return `<span class="chips">${'<span class="chip"></span>'.repeat(k)}</span><span class="betamt">${n}</span>`;}
 function tableHTML(st){ // st: {seats,board,button,pot,toAct,thinking,over,revealAll,street}
   const sb=(st.button+1)%8,bb=(st.button+2)%8;let h=`<div class="felt"><div class="rail"></div><div class="center"><div class="potlbl">Pot <b>${st.pot}</b></div><div class="board">${[0,1,2,3,4].map(k=>st.board[k]!==undefined?pcard(st.board[k],true):'<span class="pc slot"></span>').join("")}</div><div class="street">${st.label||""}</div></div>`;
@@ -535,8 +628,9 @@ window.uAct=t=>{const h=gHint(0,500);const to=$("gAmt")?+$("gAmt").value:0;const
   $("gHint").innerHTML=`<div class="hintbox ${r.ok?'ok':'bad'}">${r.ok?"✔ Matches hint":"✘ Deviates from hint"} — you: <b>${r.action}</b> · heuristic "solver-style" hint (not real solver output): <b>${h.act.toUpperCase()}</b> — ${h.why}`+
    (!r.ok?` <span class="note">(est. loss ≈ ${r.loss.toFixed(1)} chips)</span> <button onclick="retry(${G.session.length-1})">↺ Retry this decision</button>`:"")+`</div>`;
   $("gCtl").innerHTML="";renderSession();setTimeout(()=>{gAdvance();renderTable();},30);};
-window.retry=k=>{if(G.thinking>=0&&!G.handOver)return;closeReplay();const r=G.session[k];if(!r.snap)return;gRestore(r.snap);
-  $("gHint").innerHTML=`<div class="hintbox"><i>Retrying hand #${r.hand} ${r.street} — same deck, hands and opponent actions. Last time you chose ${r.action}.</i></div>`;G.history=[];renderTable();setTimeout(dash,0);G.ui.prompt(legal(0));};
+window.retry=k=>{const r=G.session[k];if(!r||!r.snap)return;retrySnap(r.snap,r);};
+window.retrySnap=(snap,r)=>{if(G.thinking>=0&&!G.handOver)return;closeReplay();if(!G.practice)G.preRetry=gSnapshot();G.practice=true;gRestore(snap);if(G.preRetry){G.bank=JSON.parse(JSON.stringify(G.preRetry.bank));G.meters=JSON.parse(JSON.stringify(G.preRetry.meters));}for(const st of G.seats){st.prof=st.isUser?null:PROFILES.find(p=>p.name===st.name)||null;}
+  $("gHint").innerHTML=`<div class="hintbox"><i>Retrying hand #${r.hand} ${r.street} — same deck, hands and opponent actions. Last time you chose ${r.action}. Practice mode: this replay doesn't change stacks or history.</i></div>`;G.history=[];renderTable();setTimeout(dash,0);G.ui.prompt(legal(0));};
 // ---- street-by-street replay of completed hands ----
 function renderHandList(){$("gHands").innerHTML=(G.hands||[]).map((h,k)=>`<option value="${k}">Hand #${h.no} — ${h.result}</option>`).reverse().join("");}
 window.openReplay=k=>{if(!G.hands||!G.hands[k])return;RV={h:G.hands[k],k:0};$("gReplay").style.display="flex";showFrame();};
@@ -553,6 +647,7 @@ $("gSitOut").onchange=e=>G.sitOutSetting=+e.target.value;$("gSpeed").onchange=e=
 $("gStart").onclick=()=>{if(G.thinking>=0&&!G.handOver)return;closeReplay();if(!G.seats.length)gInit();$("gHint").innerHTML="";gNewHand();};
 $("gTable").innerHTML=tableHTML({seats:PROFILES.slice(0,8).map((p,i)=>({name:i?p.name:"Mouk",stack:200,bet:0,hand:[],isUser:!i})),board:[],button:0,pot:0,toAct:-1,label:"Press Deal to start"});
 if(typeof location!=="undefined"&&location.hash==="#demo"){document.body.classList.add("demo");G.speed=0;gInit();gNewHand();}
+else setTimeout(resumePrompt,0);
 
 const SEATPOS_P=[[50,96],[10,77],[8,49],[13,21],[50,4],[87,21],[92,49],[90,77]],BETPOS_P=[[50,79],[28,69],[26,49],[30,31],[50,21],[70,31],[74,49],[72,69]];
 const SEATPOS_L=SEATPOS.slice(),BETPOS_L=BETPOS.slice();
@@ -574,6 +669,37 @@ window.doImport=inp=>{const f=inp.files[0];if(!f)return;f.text().then(t=>{try{co
   const tb=(o,t)=>`<h4>${t}</h4><table><tr><th></th><th>Decisions</th><th>Mistakes</th><th>Est. chips lost</th></tr>${Object.entries(o).sort((a,b)=>b[1].l-a[1].l).map(([k,v])=>`<tr><td>${k}</td><td>${v.n}</td><td>${v.m}</td><td>${v.l.toFixed(0)}</td></tr>`).join("")}</table>`;
   $("sess").innerHTML=`<h3 style="font-size:13px">This session</h3>`+$("sess").innerHTML+`<h3 style="font-size:13px">All time (saved, ${L.length} decisions)</h3><div class="two">${tb(agg("st"),"By street")+tb(agg("ty"),"By hand type")}</div>`;};}
 renderSession();
+
+window.chipDlg=(broke)=>{const b=bankOf("Mouk"),max=G.MAXBI-b.stack;if(max<=0){alert("Mouk's stack is already at the 2,000 cap.");return;}const mn=Math.min(G.START,max);
+  $("gCtl").innerHTML=`<div class="abar"><b>${broke?"Mouk is busted — rebuy":"Top up Mouk"}</b> <span class="sizer"><input type="range" id="biAmt" min="${mn}" max="${max}" step="10" value="${mn}" oninput="biL.textContent=this.value"><span id="biL">${mn}</span></span><button class="raise" onclick="mookRebuy(+biAmt.value);${broke?'gNewHand()':'renderTable();G.ui.end()'}">${broke?"Rebuy &amp; deal":"Add chips"}</button>`+
+  (broke?`<button class="fold" onclick="if(confirm('End this session? Stacks reset for the next one.')){const n=bankNets().find(x=>x.name==='Mouk');newSession();$('gCtl').innerHTML='<div class=abar><b>Session ended — Mouk net '+(n.net>=0?'+':'')+n.net+' chips.</b><button onclick=gNewHand()>Start new session</button></div>';}">End session</button>`:`<button onclick="G.ui.end()">Cancel</button>`)+`</div>`;};
+G.ui.broke=()=>chipDlg(true);
+{const _e=G.ui.end;G.ui.end=function(){_e();if(bankOf("Mouk").stack<G.BB)G.ui.broke();else if(bankOf("Mouk").stack<G.MAXBI){const ab=document.querySelector?document.querySelector("#gCtl .abar"):null;if(ab)ab.insertAdjacentHTML("beforeend",`<button class="q" onclick="chipDlg(false)">Top up</button>`);}};}
+function netTable(){return `<h4>Session stacks &amp; net (default buy-in ${G.START}, max top-up to ${G.MAXBI})</h4><table><tr><th>Player</th><th>Stack</th><th>Bought in</th><th>Rebuys</th><th>Top-ups</th><th>Net</th></tr>${bankNets().sort((a,b)=>b.net-a.net).map(x=>`<tr><td>${x.name}</td><td>${x.stack}</td><td>${x.buyins}</td><td>${x.rebuys}</td><td>${x.topups}</td><td class="${x.net>=0?'good':'bad'}">${x.net>=0?'+':''}${x.net}</td></tr>`).join("")}</table>`;}
+{const _rs2=renderSession;renderSession=function(){_rs2();$("sess").innerHTML=netTable()+$("sess").innerHTML;};}
+{const _rh=renderHist;window.renderHist=renderHist=function(pg){_rh(pg);$("histTot").innerHTML+=netTable();};}
+{const _rt=renderTable;renderTable=function(){_rt();if(G.seats.length&&$("gInfo")){const m=bankNets().find(x=>x.name==="Mouk");$("gInfo").innerHTML=`Hand #${G.handNo} · ${G.sitOut!==undefined?PROFILES[G.sitOut].name+" sits out · ":""}Mouk net <b class="${m.net>=0?'good':'bad'}">${m.net>=0?'+':''}${m.net}</b> (bought in ${m.buyins})`;}};}
+
+function sndBtns(){const m=$("muteBtn"),v=$("voiceBtn");if(m)m.textContent=SND.mute?"🔇":"🔊";if(v){v.style.opacity=SND.voice&&!SND.mute?1:0.4;v.title="All-in voice: "+(SND.voice?"on":"off");}}
+window.toggleMute=()=>{SND.mute=!SND.mute;try{localStorage.setItem("plo5mute",SND.mute?"1":"0")}catch(e){}audioInit();sndBtns();};
+window.toggleVoice=()=>{SND.voice=!SND.voice;try{localStorage.setItem("plo5voice",SND.voice?"1":"0")}catch(e){}sndBtns();};
+sndBtns();
+// history -> replay / retry
+window.openHistReplay=gno=>{const r=histAll().find(x=>x.gno===gno);if(!r)return;
+  if(!r.fr){alert("Full replay data isn't stored for this older hand. Action log:\n"+(r.log||[]).map(x=>x[1]).join("\n"));return;}
+  const hands=r.shown.map(s=>s?s.match(/../g).map(c=>parseCard(c)):[-1,-1,-1,-1,-1]),B=r.board.match(/../g)||[];
+  const frames=r.fr.map(f=>({msg:f.m,street:f.st,board:B.slice(0,f.b).map(c=>parseCard(c)),button:r.button,pot:f.p,seats:f.s.map((x,j)=>({name:r.names[j],stack:x[0],bet:x[1],folded:!!x[2],allin:!!x[3],hand:hands[j],isUser:j===0}))}));
+  tg("pHist");RV={h:{no:r.gno,frames},k:0};$("gReplay").style.display="flex";showFrame();};
+window.retryHist=(gno,k)=>{const r=histAll().find(x=>x.gno===gno);if(!r||!r.snaps||!r.snaps[k])return;tg("pHist");retrySnap(r.snaps[k].snap,{hand:r.gno,street:r.snaps[k].st,action:r.snaps[k].a});};
+{const _rh3=renderHist;window.renderHist=renderHist=function(pg){_rh3(pg);const H=histAll().slice().reverse().slice(pg*25,pg*25+25);const rows=document.querySelectorAll?document.querySelectorAll("#histTbl tr"):[];
+  H.forEach((r,k)=>{const tr=rows[k+1];if(!tr)return;tr.insertAdjacentHTML("beforeend",`<td><button class="sm" onclick="openHistReplay(${r.gno})">▶</button>${(r.snaps||[]).map((s,j)=>`<button class="sm" style="background:#9e2a2a" title="${s.st}: you ${s.a}, hint ${s.h}" onclick="retryHist(${r.gno},${j})">Retry this spot</button>`).join("")}</td>`);});};}
+// keep heavy replay data only for the most recent hands (storage budget)
+{const _rec=recordHand;recordHand=function(won){const rec=_rec(won);const H=histAll();let ch=false;for(let i=0;i<H.length-150;i++){if(H[i].fr||H[i].snaps){delete H[i].fr;delete H[i].snaps;ch=true;}}for(let i=0;i<H.length-50;i++){if(H[i].snaps&&H[i].snaps.length){delete H[i].snaps;ch=true;}}if(ch)PH.set("plo5hist",H);return rec;};}
+// resume prompt
+function resumePrompt(){const s=PH.get("plo5state",null);if(!s||!s.seats||!s.seats.length)return;
+  $("gCtl").innerHTML=`<div class="abar"><b>Saved session found</b> (hand #${s.handNo}, ${new Date(s.saved).toLocaleString()})<button class="raise" onclick="doResume()">Resume session</button><button class="fold" onclick="if(confirm('Start a new session? Stacks reset to fresh buy-ins.')){newSession();PH.ls()&&PH.ls().removeItem('plo5state');gInit();gNewHand();}">New session</button></div>`;}
+window.doResume=()=>{if(!resumeState())return;renderTable();renderSession();renderHandList();setTimeout(dash,0);
+  if(G.handOver)G.ui.end();else if(G.toAct===0&&canAct(G.seats[0]))G.ui.prompt(legal(0));else{gAdvance();renderTable();}};
 
 applyOrient();
 if(typeof window.innerWidth==="number"&&window.innerWidth>=1100&&window.innerHeight>=600)document.getElementById("hud").classList.add("open");
