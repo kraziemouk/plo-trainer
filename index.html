@@ -85,9 +85,13 @@ button.sm{padding:4px 9px;font-size:12px;background:#555;margin:0}button.sm.deal
 .mt{position:relative;width:28px;height:28px;min-width:28px;padding:0;margin:0;border-radius:6px;background:#ffffff14;border:1px solid #fff3;font-size:15px;line-height:26px;color:#fff}
 .mt i{position:absolute;top:-6px;right:-6px;min-width:15px;height:15px;border-radius:8px;background:#e53935;color:#fff;font:700 10px/15px sans-serif;font-style:normal;text-align:center;padding:0 2px}
 .mt.crack{background:linear-gradient(135deg,transparent 46%,#ff5252 47%,#ff5252 53%,transparent 54%),#ffffff14}
+.felt .ring{position:absolute;inset:5%;border-radius:50%;border:1.5px solid #d9bf6a55;box-shadow:0 0 0 3px #d9bf6a14 inset;pointer-events:none}
+.felt .mono{position:absolute;left:50%;top:24%;transform:translate(-50%,-50%);font-family:"UnifrakturMaguntia","Old English Text MT","Cloister Black",serif;font-size:clamp(18px,6cqw,46px);color:#d9bf6a;opacity:.55;letter-spacing:.08em;text-shadow:0 1px 0 #0005;pointer-events:none;white-space:nowrap}
+.felt .mono span{font-family:Georgia,"Times New Roman",serif;font-style:italic;font-size:.7em;margin:0 .25em;vertical-align:.1em}
+@media (orientation:landscape) and (max-height:500px){.felt .mono{top:30%;font-size:clamp(14px,7cqh,28px)}}
 </style></head><body class="app"><div id="app">
 <div id="topbar"><b class="ttl">♠ PLO5 Trainer</b><span id="gInfo" class="note"></span><span class="tb">
-<button class="sm" onclick="tg('drawer')">☰ Learn</button><button class="sm" onclick="tg('pLog')">Log</button><button class="sm" onclick="tg('pRep')">Replay</button><button class="sm" onclick="renderHist(0);tg('pHist')">History</button><button class="sm" onclick="tg('pOpt')">⚙</button><button class="sm" id="theme">◐</button><button class="sm" id="muteBtn" onclick="toggleMute()">🔊</button><button class="sm" id="voiceBtn" onclick="toggleVoice()" title="All-in voice">🗣</button><button class="sm deal" id="gStart">Deal</button></span></div>
+<button class="sm" onclick="tg('drawer')">☰ Learn</button><button class="sm" onclick="tg('pLog')">Log</button><button class="sm" onclick="tg('pRep')">Replay</button><button class="sm" onclick="renderHist(0);tg('pHist')">History</button><button class="sm" onclick="renderWait();tg('pWait')">Waitlist</button><button class="sm" onclick="tg('pOnline')">🌐</button><button class="sm" onclick="tg('pOpt')">⚙</button><button class="sm" id="theme">◐</button><button class="sm" id="muteBtn" onclick="toggleMute()">🔊</button><button class="sm" id="voiceBtn" onclick="toggleVoice()" title="All-in voice">🗣</button><button class="sm deal" id="gStart">Deal</button></span></div>
 <div id="stage"><div id="gTable" class="tablewrap"></div></div>
 <div id="hud"><button id="hudTog" onclick="document.getElementById('hud').classList.toggle('open')">Odds ▴</button><div id="hudBody"><div id="gHint"></div><aside id="dash" class="dash"><p class="note">Deal a hand — Mouk's live equity appears here.</p></aside></div></div>
 <div id="bottom"><div id="gReplay" class="rvbar" style="display:none"><button onclick="stepReplay('pst')">⏮</button><button onclick="stepReplay('prev')">◀</button><button onclick="stepReplay('next')">▶</button><button onclick="stepReplay('nst')">⏭</button><span id="gRvMsg"></span><button onclick="closeReplay()">✕</button></div><div id="gCtl"><div class="abar"><button class="raise" onclick="gStart.click()">Deal first hand</button></div></div></div>
@@ -113,8 +117,16 @@ Trials per cell: <select id="tblN"><option>1000</option><option selected>2500</o
 <div id="pHist" class="sheet small"><div class="sheethead"><b>Hand history (saved in this browser)</b><button class="sm" onclick="tg('pHist')">✕</button></div><div id="histWarn" class="bad"></div><div id="histTot"></div>
 <p><button class="sm" onclick="doExport()">Export save file</button> <button class="sm" onclick="histImp.click()">Import save file</button><input type="file" id="histImp" accept=".json,application/json" style="display:none" onchange="doImport(this)"> <button class="sm" style="background:#9e2a2a" onclick="if(confirm('Clear all saved hand history and leak stats?')){clearHist();renderHist(0);renderSession();}">Clear history</button></p>
 <div id="histTbl"></div></div>
+<div id="pWait" class="sheet small"><div class="sheethead"><b>Table &amp; waitlist</b><button class="sm" onclick="tg('pWait')">✕</button></div><div id="waitBody"></div>
+<p>Add player: <input id="wName" size="10" maxlength="16"> style <select id="wTmpl"></select> <button class="sm" onclick="if(addCustom(wName.value,wTmpl.value)){wName.value='';autosave();renderWait();}else alert('Pick a new, unique name.')">Add to waitlist</button></p></div>
+<div id="pOnline" class="sheet small"><div class="sheethead"><b>Online game (optional)</b><button class="sm" onclick="tg('pOnline')">✕</button></div>
+<p class="note">Single-player works offline. Online play uses Supabase Realtime; nothing loads until you host or join.</p>
+<p><button onclick="mpUIHost()">Host online game</button></p>
+<p>Join: code <input id="mpCode" size="7" maxlength="6"> name <input id="mpName" size="10" maxlength="16"> <button onclick="mpUIJoin()">Join</button></p>
+<div id="mpOut"></div>
+<details><summary>Online settings</summary><p>Supabase URL <input id="mpUrl" style="width:100%"></p><p>Publishable / anon key <input id="mpKey" style="width:100%"></p><button class="sm" onclick="mpSaveCfg()">Save</button></details></div>
 <div id="pOpt" class="sheet small"><div class="sheethead"><b>Options</b><button class="sm" onclick="tg('pOpt')">✕</button></div>
-<p><button class="sm" onclick="if(confirm('Start a new session? All stacks reset to fresh buy-ins.')){newSession();renderTable();renderSession();}">New session</button></p><p>Sits out: <select id="gSitOut"></select></p><p>Think-time: <select id="gSpeed"><option value="0">Instant</option><option value="0.5">Fast</option><option value="1" selected>Realistic</option></select></p><p><label><input type="checkbox" id="gWeighted" checked> Weight opponents to loose range</label></p><p><label><input type="checkbox" id="gKeep"> Keep tilt &amp; drink between page loads</label></p><p>Equity trials: <select id="gIters"><option>800</option><option selected>2000</option><option>5000</option></select></p></div>
+<p><button class="sm" onclick="if(confirm('Start a new session? All stacks reset to fresh buy-ins.')){newSession();renderTable();renderSession();}">New session</button></p><p>Bot speed: <select id="gSpeed"><option value="1" selected>Fast</option><option value="2">Normal</option><option value="0">Instant</option></select></p><p><label><input type="checkbox" id="gWeighted" checked> Weight opponents to loose range</label></p><p><label><input type="checkbox" id="gKeep"> Keep tilt &amp; drink between page loads</label></p><p>Equity trials: <select id="gIters"><option>800</option><option selected>2000</option><option>5000</option></select></p></div>
 <script>// ==== CORE (shared) ====
 const RANKS="23456789TJQKA",SUITS="shdc",SUITSYM={s:"♠",h:"♥",d:"♦",c:"♣"};
 function parseCard(s){s=s.trim();if(s.length!==2)return -1;const r=RANKS.indexOf(s[0].toUpperCase()),u=SUITS.indexOf(s[1].toLowerCase());return r<0||u<0?-1:r*4+u;}
@@ -277,6 +289,7 @@ const PROFILES=[
  {name:"David N",blurb:"Very aggressive big gambler. Bets the nuts hard and bluffs often.",tight:0.18,agg:0.85,bluff:0.35,chase:1.3,nutReq:0,think:600},
  {name:"Rich",blurb:"Doctor. Conservative, but gambles when outs and pot odds justify it.",tight:0.38,agg:0.45,bluff:0.05,chase:1.0,nutReq:2,think:1200,math:true},
  {name:"Todd",blurb:"Plays like Rich (pot-odds gambler) but tanks for a long time.",tight:0.38,agg:0.45,bluff:0.05,chase:1.0,nutReq:2,think:3200,math:true},
+ {name:"Ricky",blurb:"Loose-aggressive: plays lots of hands, raises and re-raises, c-bets almost always, fires multiple barrels.",tight:0.15,agg:0.8,bluff:0.28,chase:1.2,nutReq:0,think:650},
  {name:"Rick",blurb:"Drinks, loves playing cards. Loose gambler who bluffs.",tight:0.12,agg:0.6,bluff:0.3,chase:1.4,nutReq:0,think:700},
  {name:"Yum Yum",blurb:"Never bluffs. A chaser: calls to see cards with draws, rarely raises or shoves.",tight:0.22,agg:0.15,bluff:0.0,chase:1.8,drawRaise:0.1,nutReq:1,think:900},
  {name:"L",blurb:"Like Yum Yum: (almost) never bluffs, but chases less often.",tight:0.28,agg:0.4,bluff:0.02,chase:1.2,nutReq:1,think:900},
@@ -294,7 +307,7 @@ function gNewHand(){
   if(G.preRetry){const pr=G.preRetry;G.preRetry=null;G.practice=false;gRestore(pr);}
   if(bankOf("Mouk").stack<G.BB){G.ui&&G.ui.broke&&G.ui.broke();return "broke";}
   for(const s of G.seats){Object.assign(s,{hand:[],folded:false,allin:false,bet:0,total:0});}
-  G.frames=[];G.handNo++;G.sitOut=G.sitOutSetting>=0?G.sitOutSetting:(G.handNo-1)%8;{let k=0;for(let i=1;i<8;i++){if(k===G.sitOut)k++;G.seats[i].prof=PROFILES[k];G.seats[i].name=PROFILES[k].name;k++;}}L(`${PROFILES[G.sitOut].name} sits out this hand.`);meterNewHand();loadStacks();sfx("deal");for(const s of G.seats){s.calledPre=false;s.maxEq=0;}G.button=nextIdx(G.button);G.board=[];G.street=0;G.history=[];G.handOver=false;G.aggressor=-1;G.result="";
+  G.frames=[];G.handNo++;mpNewHandHook();seatTable();meterNewHand();loadStacks();sfx("deal");setTimeout(mpAfterDeal,0);for(const s of G.seats){s.calledPre=false;s.maxEq=0;}G.button=nextIdx(G.button);G.board=[];G.street=0;G.history=[];G.handOver=false;G.aggressor=-1;G.result="";
   G.seed=(G.rngNext()*4294967296)>>>0;G.deck=[...Array(52).keys()];for(let a=51;a>0;a--){const b=Math.floor(G.rngNext()*(a+1));[G.deck[a],G.deck[b]]=[G.deck[b],G.deck[a]];}let k=0;
   for(const s of G.seats)s.hand=G.deck.slice(k,k+=5);G.deckPos=k;
   const sb=nextIdx(G.button),bb=nextIdx(sb);
@@ -308,7 +321,7 @@ function legal(i){const s=G.seats[i];const toCall=Math.min(G.curBet-s.bet,s.stac
   const minTo=Math.min(G.curBet+G.minRaise,s.bet+s.stack);
   const canRaise=s.stack>toCall&&maxTo>G.curBet&&G.seats.some((o,j)=>j!==i&&canAct(o)||(j!==i&&!o.folded&&o.bet>s.bet&&false));
   return {toCall,minTo,maxTo,canRaise:canRaise&&G.seats.filter((o,j)=>j!==i&&canAct(o)).length>0,pot};}
-function gAct(i,type,to){gActCore(i,type,to);const s=G.seats[i];const last=G.log[G.log.length-1]||"";sfx(s.allin&&/all-in/.test(last)?"allin":/folds/.test(last)?"fold":/raises|bets/.test(last)?(/raises/.test(last)?"raise":"bet"):"tap");autosave();}
+function gAct(i,type,to){gActCore(i,type,to);if(typeof mpTick==='function')setTimeout(mpTick,0);const s=G.seats[i];const last=G.log[G.log.length-1]||"";sfx(s.allin&&/all-in/.test(last)?"allin":/folds/.test(last)?"fold":/raises|bets/.test(last)?(/raises/.test(last)?"raise":"bet"):"tap");autosave();}
 function gActCore(i,type,to){ // type: fold|check|call|raise (bet = raise when curBet==bet)
   const s=G.seats[i],lg=legal(i);
   if(type==="check"&&lg.toCall>0)type="call";
@@ -338,7 +351,8 @@ function gAdvance(){ // run bots until user's turn or hand end
     if(c>=9){G.need.clear();continue;}
     G.toAct=i;
     if(G.seats[i].isUser){autosave();G.ui?G.ui.prompt(legal(i)):0;return "user";}
-    if(G.speed>0&&G.ui){G.thinking=i;G.ui.think(i);const tk=effProf(G.seats[i]).think*G.speed;setTimeout(()=>{G.thinking=-1;const [t,to]=botDecide(i);gAct(i,t,to);gAdvance();},tk);return "wait";}
+    if(G.seats[i].remote){mpAwait(i);return "remote";}
+    if(G.speed>0&&G.ui){G.thinking=i;G.ui.think(i);const tk=Math.min(800,effProf(G.seats[i]).think/3*G.speed);setTimeout(()=>{G.thinking=-1;const [t,to]=botDecide(i);gAct(i,t,to);gAdvance();},tk);return "wait";}
     const [t,to]=botDecide(i);gAct(i,t,to);
   }
   throw new Error("advance guard");
@@ -400,8 +414,26 @@ if(typeof window!=="undefined"&&typeof window.addEventListener==="function"){con
 function autosave(){if(G.practice||typeof PH==="undefined")return;const s=gSnapshot();s.sitOutSetting=G.sitOutSetting;s.session=G.session.map(r=>{const x={...r};delete x.snap;return x;});s.saved=new Date().toISOString();PH.set("plo5state",s);}
 function resumeState(){const s=PH.get("plo5state",null);if(!s||!s.seats||!s.seats.length)return false;if(!G.seats.length)gInit();gRestore(s);G.session=s.session||[];G.thinking=-1;G.sitOutSetting=s.sitOutSetting??-1;
   for(const st of G.seats){const p=PROFILES.find(p=>p.name===st.name);st.prof=st.isUser?null:p||null;}return true;}
+
+// ===== Fixed 8-seat table + waitlist (replaces sit-out rotation) =====
+function profByName(n){return PROFILES.find(p=>p.name===n)||(G.custom||[]).find(p=>p.name===n)||null;}
+const DECLINE_REBUY={"Milty":0.5,"L":0.4,"Rich":0.3,"Todd":0.3,"Willy":0.25};
+function tableInit(){if(!G.table){G.table=["Milty","David N","Rich","Todd","Rick","Yum Yum","L"];G.wait=["Ricky","Willy"];}G.wait=G.wait||[];G.custom=G.custom||[];G.leave=G.leave||[];}
+function seatTable(){tableInit();
+  for(let k=0;k<7;k++){const n=G.table[k];if(n&&G.leave.includes(n)){G.table[k]=null;G.wait.push(n);L(`${n} leaves seat ${k+1} for the waitlist.`);}}G.leave=[];
+  for(let k=0;k<7;k++){const seat=k+1,s=G.seats[seat];
+    if(s.remote){if(G.table[k]){G.wait.push(G.table[k]);G.table[k]=null;}s.prof=null;s.name=s.remote.name;continue;}
+    let n=G.table[k];
+    if(n&&bankOf(n).stack<G.BB&&G.rngNext()<(DECLINE_REBUY[n]??0.15)){L(`${n} busts and declines to rebuy — goes to the waitlist.`);G.wait.push(n);G.table[k]=n=null;}
+    if(!n){const nx=G.wait.shift();if(nx){G.table[k]=n=nx;L(`Seat ${seat} opens — offered to ${nx} (top of waitlist), who sits down.`);}}
+    s.name=n||"Empty";s.prof=profByName(n);}
+  if(G.wait.length)L(`Waitlist: ${G.wait.join(", ")}.`);}
+function leaveSeat(n){tableInit();if(G.table.includes(n)&&!G.leave.includes(n))G.leave.push(n);}
+function callUp(n){tableInit();const i=G.wait.indexOf(n);if(i<0)return false;G.wait.splice(i,1);G.wait.unshift(n);return true;}
+function addCustom(name,tmpl){tableInit();name=String(name).trim().slice(0,16).replace(/[<>&"']/g,"");if(!name||allNames().includes(name))return false;const t=profByName(tmpl)||PROFILES[0];
+  G.custom.push({...t,name,blurb:`Custom player (${t.name} style).`});delete G.custom[G.custom.length-1].vs;G.wait.push(name);G.meters=Object.assign(freshMeters(),G.meters||{});return true;}
 // ===== Persistent session stacks (chips, blinds 1/2; buy-in/rebuy default 200; no adding chips past 2,000) =====
-const BUYIN_STYLE={"David N":{base:800,cover:1.0},"Rick":{base:600,cover:0.9},"Willy":{base:300,cover:0.75},"Rich":{base:250,cover:0.5},"Todd":{base:250,cover:0.5},"Yum Yum":{base:250,cover:0.5},"Milty":{base:200,cover:0},"L":{base:200,cover:0}};
+const BUYIN_STYLE={"David N":{base:800,cover:1.0},"Rick":{base:600,cover:0.9},"Ricky":{base:500,cover:0.85},"Willy":{base:300,cover:0.75},"Rich":{base:250,cover:0.5},"Todd":{base:250,cover:0.5},"Yum Yum":{base:250,cover:0.5},"Milty":{base:200,cover:0},"L":{base:200,cover:0}};
 function freshBank(){const b={};for(const n of ["Mouk",...PROFILES.map(p=>p.name)])b[n]={stack:0,buyins:0,rebuys:0,topups:0};
   for(const n in b){const amt=n==="Mouk"?G.START:Math.min(G.MAXBI,(BUYIN_STYLE[n]||{base:G.START}).base);b[n].stack=amt;b[n].buyins=amt;}return b;}
 function bankOf(n){if(!G.bank)G.bank=PH.get("plo5bank",null)||freshBank();if(!G.bank[n])G.bank[n]={stack:G.START,buyins:G.START,rebuys:0,topups:0};const b=G.bank[n];b.topups=b.topups||0;return b;}
@@ -412,29 +444,34 @@ function loadStacks(){const seated=G.seats.map(s=>bankOf(s.name).stack);
   G.seats.forEach((s,i)=>{const b=bankOf(s.name);if(s.isUser){s.stack=b.stack;return;}
     const others=seated.filter((x,j)=>j!==i),tgt=buyTarget(s.name,others),big=Math.max(...others);
     if(b.stack<G.BB){const a=addChips(b,Math.max(G.START,tgt));b.rebuys++;L(`${s.name} is busted and rebuys for ${a}.`);if(G.meters&&G.meters[s.name])G.meters[s.name].tilt=cap9(G.meters[s.name].tilt+1);}
-    else if(b.stack<tgt&&big>=Math.max(600,1.5*b.stack)){const a=addChips(b,tgt-b.stack);if(a>0){b.topups++;L(`${s.name} tops up ${a} (stack ${b.stack}) to cover the big stack.`);}}
+    else if(b.stack<0.5*tgt&&big>=Math.max(600,2*b.stack)){const a=addChips(b,tgt-b.stack);if(a>0){b.topups++;L(`${s.name} tops up ${a} (stack ${b.stack}) to cover the big stack.`);}}
     s.stack=b.stack;});}
 function saveStacks(){for(const s of G.seats)bankOf(s.name).stack=s.stack;PH.set("plo5bank",G.bank);}
 function mookRebuy(amt){const b=bankOf("Mouk");const a=addChips(b,amt===undefined?G.START:amt);if(a>0){if(b.stack-a<G.BB)b.rebuys++;else b.topups++;}PH.set("plo5bank",G.bank);if(G.seats[0])G.seats[0].stack=b.stack;return a;}
 function newSession(){G.bank=freshBank();PH.set("plo5bank",G.bank);for(const s of G.seats)s.net=0;}
 function bankNets(){bankOf("Mouk");return Object.entries(G.bank).map(([n,b])=>({name:n,stack:b.stack,buyins:b.buyins,rebuys:b.rebuys,topups:b.topups||0,net:b.stack-b.buyins}));}
 // ===== Drink & tilt meters (Yum Yum, David N) =====
-const METERED=["Yum Yum","David N"];
-function freshMeters(){const m={};for(const n of METERED)m[n]={drink:0,tilt:0,dealt:0};return m;}
+const METERED=["Mouk",...PROFILES.map(p=>p.name)];
+function allNames(){return ["Mouk",...PROFILES.map(p=>p.name),...(G.custom||[]).map(p=>p.name)];}
+const METER_SENS={"Milty":0.25,"L":0.6,"Rich":0.6,"Todd":0.6,"Willy":0.7,"Yum Yum":1,"Rick":1.25,"Ricky":1.15,"David N":1.3,"Mouk":1};
+const scaleLvl=(n,l)=>Math.min(3,Math.round(l*(METER_SENS[n]??1)));
+function freshMeters(){const m={};for(const n of allNames())m[n]={drink:0,tilt:0,dealt:0};return m;}
 G.keep=false;G.meters=freshMeters();
 try{if(typeof localStorage!=="undefined"&&localStorage.getItem("plo5keep")==="1"){G.keep=true;const s=JSON.parse(localStorage.getItem("plo5meters")||"null");if(s)G.meters=s;}}catch(e){}
 function saveMeters(){try{if(typeof localStorage==="undefined")return;localStorage.setItem("plo5keep",G.keep?"1":"0");if(G.keep)localStorage.setItem("plo5meters",JSON.stringify(G.meters));else localStorage.removeItem("plo5meters");}catch(e){}}
 const cap9=x=>Math.max(0,Math.min(9,x));
-function drinkLvl(n){const d=G.meters[n]?G.meters[n].drink:0;return d>=7?3:d>=4?2:d>=2?1:0;}
-function tiltLvl(n){const t=G.meters[n]?G.meters[n].tilt:0;return t>=9?3:t>=6?2:t>=3?1:0;}
-function meterNewHand(){for(const n of METERED){const m=G.meters[n];if(PROFILES[G.sitOut].name===n){m.drink=cap9(m.drink-1);continue;}m.dealt++;if(m.dealt%5===0)m.drink=cap9(m.drink+1);}saveMeters();}
+function rawDrinkLvl(n){const d=G.meters&&G.meters[n]?G.meters[n].drink:0;return d>=7?3:d>=4?2:d>=2?1:0;}
+function drinkLvl(n){return scaleLvl(n,rawDrinkLvl(n));}
+function rawTiltLvl(n){const t=G.meters&&G.meters[n]?G.meters[n].tilt:0;return t>=9?3:t>=6?2:t>=3?1:0;}
+function tiltLvl(n){return scaleLvl(n,rawTiltLvl(n));}
+function meterNewHand(){G.meters=Object.assign(freshMeters(),G.meters||{});for(const n of (G.wait||[]))if(G.meters[n])G.meters[n].drink=cap9(G.meters[n].drink-1);for(const n of allNames()){const m=G.meters[n];if(!G.seats.some(s=>s.name===n))continue;m.dealt++;if(m.dealt%5===0)m.drink=cap9(m.drink+1);}saveMeters();}
 function trackEq(){ // exact equity of metered players vs actual live hands over all remaining runouts
   const live=G.seats.filter(s=>!s.folded),rest=G.deck.slice(G.deckPos),need=5-G.board.length;const tr=live.filter(s=>G.meters&&G.meters[s.name]);if(!tr.length)return;
   const sc=new Map(tr.map(s=>[s,0]));let n=0;
   const run=B=>{n++;let best=-1,ws=[];for(const s of live){const v=evalOmaha(s.hand,B);if(v>best){best=v;ws=[s];}else if(v===best)ws.push(s);}for(const s of ws)if(sc.has(s))sc.set(s,sc.get(s)+1/ws.length);};
   if(need===1)for(const c of rest)run(G.board.concat([c]));else for(let a=0;a<rest.length;a++)for(let b=a+1;b<rest.length;b++)run(G.board.concat([rest[a],rest[b]]));
   for(const s of tr)s.maxEq=Math.max(s.maxEq||0,sc.get(s)/n);}
-function meterShowdown(won,vals){G.seats.forEach((s,j)=>{const m=s.prof&&G.meters[s.name];if(!m)return;const lost=s.total-won[j];
+function meterShowdown(won,vals){G.seats.forEach((s,j)=>{const m=G.meters&&G.meters[s.name];if(!m)return;const lost=s.total-won[j];
   if(lost>=40){m.drink=cap9(m.drink+1);m.tilt=cap9(m.tilt+1);if(vals&&!s.folded&&catOf(vals[j])>=4)m.tilt=cap9(m.tilt+1);}
   if(vals&&!s.folded&&won[j]===0&&(s.maxEq||0)>=0.6)m.tilt=cap9(m.tilt+2); // bad beat: was >=60% on flop/turn // bad beat: lost at showdown with a straight+
   else if(-lost>=40)m.tilt=cap9(m.tilt-1);});saveMeters();}
@@ -538,7 +575,7 @@ function heroEquity(iters,weighted,me){me=me||0;
 }
 
 // ===== snapshots for replay =====
-function gSnapshot(){const o={};for(const k of ["seats","meters","bank","sitOutSetting","sitOut","frames","button","board","deck","deckPos","street","log","handNo","handOver","history","curBet","minRaise","toAct","aggressor","rs","result"])o[k]=JSON.parse(JSON.stringify(G[k]===undefined?null:G[k]));o.need=[...G.need];return o;}
+function gSnapshot(){const o={};for(const k of ["seats","meters","bank","table","wait","custom","leave","frames","button","board","deck","deckPos","street","log","handNo","handOver","history","curBet","minRaise","toAct","aggressor","rs","result"])o[k]=JSON.parse(JSON.stringify(G[k]===undefined?null:G[k]));o.need=[...G.need];return o;}
 function gRestore(o){for(const k in o)G[k]=JSON.parse(JSON.stringify(o[k]));G.need=new Set(o.need);}
 // ===== heuristic "solver-style" hint (NOT real solver output) =====
 function handType(i){const s=G.seats[i];if(G.street===0)return pfScore(s.hand)>0.45?"Strong preflop":"Weak/marginal preflop";
@@ -567,6 +604,7 @@ function gHint(i,iters){
     else if(eqA+(ip?0.03:0)>=need){act="call";why=`Call: need ${(need*100).toFixed(0)}% (pot odds), have ~${(eq*100).toFixed(0)}%${ip?" with position":""}.`;}
     else{act="fold";why=`Fold: need ${(need*100).toFixed(0)}% to call but only ~${(eq*100).toFixed(0)}% vs ${opp} loose opponent(s)${nut?` (${nut} outs aren't enough)`:""}.`;}
   }
+  if(i===0){const mt=rawTiltLvl("Mouk"),md=rawDrinkLvl("Mouk");if(mt>=1)note+=` You're tilted (level ${mt}) — slow down and stick to the numbers.`;if(md>=2)note+=` You've had a few — double-check pot odds before calling.`;}
   why+=note;
   return {act,why,eq,need,fair,opp,pot:lg.pot,toCall:lg.toCall,type:handType(i)};
 }
@@ -593,19 +631,19 @@ const BETPOS=[[50,72],[27,70],[18,52],[27,32],[50,27],[73,32],[82,52],[73,70]];
 function pcard(c,up,small){if(!up||c<0||c===undefined||c===null)return `<span class="pc back${small?' sm':''}"></span>`;const s=SUITS[c&3];return `<span class="pc ${s==='h'||s==='d'?'red':''}${small?' sm':''}"><b>${RANKS[c>>2]==='T'?'10':RANKS[c>>2]}</b><i>${SUITSYM[s]}</i></span>`;}
 function chips(n){if(!n)return"";const k=Math.min(5,Math.ceil(Math.log2(n+1)/1.6));return `<span class="chips">${'<span class="chip"></span>'.repeat(k)}</span><span class="betamt">${n}</span>`;}
 function tableHTML(st){ // st: {seats,board,button,pot,toAct,thinking,over,revealAll,street}
-  const sb=(st.button+1)%8,bb=(st.button+2)%8;let h=`<div class="felt"><div class="rail"></div><div class="center"><div class="potlbl">Pot <b>${st.pot}</b></div><div class="board">${[0,1,2,3,4].map(k=>st.board[k]!==undefined?pcard(st.board[k],true):'<span class="pc slot"></span>').join("")}</div><div class="street">${st.label||""}</div></div>`;
+  const sb=(st.button+1)%8,bb=(st.button+2)%8;let h=`<div class="felt"><div class="rail"></div><div class="ring"></div><div class="mono">ℜ<span>&amp;</span>ℜ</div><div class="center"><div class="potlbl">Pot <b>${st.pot}</b></div><div class="board">${[0,1,2,3,4].map(k=>st.board[k]!==undefined?pcard(st.board[k],true):'<span class="pc slot"></span>').join("")}</div><div class="street">${st.label||""}</div></div>`;
   st.seats.forEach((s,i)=>{const [x,y]=SEATPOS[i],[bx,by]=BETPOS[i];const up=s.isUser||st.revealAll;
     const prof=G.seats[i]&&G.seats[i].prof&&!s.isUser?G.seats[i].prof:null;
     h+=`<div class="seatT ${s.folded?'fold':''} ${st.toAct===i?'act':''} ${st.thinking===i?'thinking':''} ${s.isUser?'me':''}" style="left:${x}%;top:${y}%">
       <div class="hcards">${s.folded&&!st.revealAll?'':s.hand.map(c=>pcard(c,up,!s.isUser)).join("")}</div>
-      <div class="tag" ${prof?`title="${prof.blurb}"`:''}><b>${s.name}</b>${G.meters&&G.meters[s.name]&&!s.isUser?`<span class="meters"><button class="mt" title="Drinks (tap +1, wraps at 9)" onclick="event.stopPropagation();bump('${s.name}','drink')">🥃<i>${G.meters[s.name].drink}</i></button><button class="mt crack" title="Tilt (tap +1, wraps at 9)" onclick="event.stopPropagation();bump('${s.name}','tilt')">🂠<i>${G.meters[s.name].tilt}</i></button></span>`:''}${s.allin?' <em>ALL-IN</em>':''}<div class="stack">${s.stack}</div>${prof?`<div class="blurb">${prof.blurb}</div>`:''}${st.thinking===i?'<div class="dots">thinking<span>.</span><span>.</span><span>.</span></div>':''}</div></div>`;
+      <div class="tag" ${prof?`title="${prof.blurb}"`:''}><b>${s.name}</b>${G.meters&&G.meters[s.name]?`<span class="meters"><button class="mt" title="Drinks (tap +1, wraps at 9)" onclick="event.stopPropagation();bump('${s.name}','drink')">🥃<i>${G.meters[s.name].drink}</i></button><button class="mt crack" title="Tilt (tap +1, wraps at 9)" onclick="event.stopPropagation();bump('${s.name}','tilt')">🂠<i>${G.meters[s.name].tilt}</i></button></span>`:''}${s.allin?' <em>ALL-IN</em>':''}<div class="stack">${s.stack}</div>${prof?`<div class="blurb">${prof.blurb}</div>`:''}${st.thinking===i?'<div class="dots">thinking<span>.</span><span>.</span><span>.</span></div>':''}</div></div>`;
     if(s.bet)h+=`<div class="bet" style="left:${bx}%;top:${by}%">${chips(s.bet)}</div>`;
     const mx=i===0?bx+14:(x+bx)/2+4,my=i===0?by:(y+by)/2;if(i===st.button)h+=`<div class="marker dealer" style="left:${mx}%;top:${my}%">D</div>`;
     else if(i===sb||i===bb)h+=`<div class="marker blind" style="left:${mx}%;top:${my}%">${i===sb?'SB':'BB'}</div>`;});
   return h+`</div>`;}
 function liveState(){const show=G.handOver&&liveSeats().length>1;return {seats:G.seats,board:G.board,button:G.button,pot:potTotal(),toAct:G.handOver?-1:G.toAct,thinking:G.thinking,revealAll:show,label:G.handOver?G.result:STREETS[G.street]};}
 function renderTable(){if(RV||!G.seats.length)return;$("gTable").innerHTML=tableHTML(liveState());
-  $("gInfo").innerHTML=`Hand #${G.handNo} · ${G.sitOut!==undefined?PROFILES[G.sitOut].name+" sits out":""} · Session net: <b class="${G.seats[0].net>=0?'good':'bad'}">${G.seats[0].net>=0?"+":""}${G.seats[0].net}</b>`;
+  $("gInfo").innerHTML=`Hand #${G.handNo} · ${G.wait&&G.wait.length?"Waitlist: "+G.wait.join(", "):""} · Session net: <b class="${G.seats[0].net>=0?'good':'bad'}">${G.seats[0].net>=0?"+":""}${G.seats[0].net}</b>`;
   $("gLog").textContent=G.log.slice(-40).join("\n");$("gLog").scrollTop=1e9;}
 function dash(){if(!G.seats.length)return;const w=$("gWeighted").checked;const e=heroEquity(+$("gIters").value,w);
   const outs=G.board.length>=3&&G.board.length<5?outsInfo(G.seats[0].hand,G.board,0):null;
@@ -642,19 +680,18 @@ function showFrame(){const fr=RV.h.frames[RV.k];$("gTable").innerHTML=tableHTML(
 function renderSession(){const lk=gLeaks();const tb=(o,t)=>`<h4>${t}</h4><table><tr><th></th><th>Decisions</th><th>Mistakes</th><th>Est. chips lost</th></tr>${Object.entries(o).sort((a,b)=>b[1].loss-a[1].loss).map(([k,v])=>`<tr><td>${k}</td><td>${v.n}</td><td>${v.m}</td><td>${v.loss.toFixed(0)}</td></tr>`).join("")}</table>`;
   $("sess").innerHTML=`<p>${lk.n} decisions · ${lk.m} deviated from hint · est. ${lk.loss.toFixed(0)} chips lost (rough pot-odds estimate)</p><div class="two">${tb(lk.by.street,"Leaks by street")+tb(lk.by.type,"Leaks by hand type")}</div>`+
   `<h4>All decisions</h4><table><tr><th>Hand</th><th>Street</th><th>Type</th><th>Mouk</th><th>Hint</th><th>Eq</th><th>Loss</th><th></th></tr>${G.session.map((r,k)=>`<tr><td>${r.hand}</td><td>${r.street}</td><td>${r.type}</td><td class="${r.ok?'good':'bad'}">${r.action}</td><td>${r.hint}</td><td>${r.eq!=null?pct(r.eq):""}</td><td>${r.loss?r.loss.toFixed(1):""}</td><td>${r.snap?`<button onclick="retry(${k})">Retry</button>`:""}</td></tr>`).reverse().join("")}</table>`;}
-$("gSitOut").innerHTML='<option value="-1">Rotate each hand</option>'+PROFILES.map((p,k)=>`<option value="${k}">${p.name}</option>`).join("");
-$("gSitOut").onchange=e=>G.sitOutSetting=+e.target.value;$("gSpeed").onchange=e=>G.speed=+e.target.value;G.speed=+($("gSpeed").value||0);
+
+{let sp=null;try{sp=localStorage.getItem("plo5speed")}catch(e){}if(sp!==null&&$("gSpeed"))$("gSpeed").value=sp;}$("gSpeed").onchange=e=>{G.speed=+e.target.value;try{localStorage.setItem("plo5speed",e.target.value)}catch(x){}};G.speed=+($("gSpeed").value??1);
 $("gStart").onclick=()=>{if(G.thinking>=0&&!G.handOver)return;closeReplay();if(!G.seats.length)gInit();$("gHint").innerHTML="";gNewHand();};
-$("gTable").innerHTML=tableHTML({seats:PROFILES.slice(0,8).map((p,i)=>({name:i?p.name:"Mouk",stack:200,bet:0,hand:[],isUser:!i})),board:[],button:0,pot:0,toAct:-1,label:"Press Deal to start"});
-if(typeof location!=="undefined"&&location.hash==="#demo"){document.body.classList.add("demo");G.speed=0;gInit();gNewHand();}
-else setTimeout(resumePrompt,0);
+$("gTable").innerHTML=tableHTML({seats:["Mouk","Milty","David N","Rich","Todd","Rick","Yum Yum","L"].map((p,i)=>({name:p,stack:200,bet:0,hand:[],isUser:!i})),board:[],button:0,pot:0,toAct:-1,label:"Press Deal to start"});
+
 
 const SEATPOS_P=[[50,96],[10,77],[8,49],[13,21],[50,4],[87,21],[92,49],[90,77]],BETPOS_P=[[50,79],[28,69],[26,49],[30,31],[50,21],[70,31],[74,49],[72,69]];
 const SEATPOS_L=SEATPOS.slice(),BETPOS_L=BETPOS.slice();
 const SEATPOS_S=[[50,92],[17,83],[7,50],[17,15],[50,8],[83,15],[93,50],[83,83]],BETPOS_S=[[50,72],[30,70],[22,50],[30,30],[50,26],[70,30],[78,50],[70,70]];
 function applyOrient(){const sh=typeof window.matchMedia==="function"&&window.matchMedia("(orientation: landscape) and (max-height: 500px)").matches;const p=typeof window.matchMedia==="function"&&window.matchMedia("(orientation: portrait)").matches;const S=sh?SEATPOS_S:p?SEATPOS_P:SEATPOS_L,B=sh?BETPOS_S:p?BETPOS_P:BETPOS_L;for(let i=0;i<8;i++){SEATPOS[i]=S[i];BETPOS[i]=B[i];}}
 if(document.getElementById("gKeep")){const k=document.getElementById("gKeep");k.checked=G.keep;k.onchange=e=>{G.keep=e.target.checked;saveMeters();};}
-window.tg=id=>{for(const x of ["drawer","pLog","pRep","pOpt","pHist"])if(x!==id)$(x).classList.remove("open");$(id).classList.toggle("open");};
+window.tg=id=>{for(const x of ["drawer","pLog","pRep","pOpt","pHist","pOnline","pWait"])if(x!==id)$(x).classList.remove("open");$(id).classList.toggle("open");};
 {const _d=dash;dash=function(){_d();const h=G.history[G.history.length-1];if(h)$("hudTog").innerHTML=`Mouk <b>${pct(h.eq)}</b> · W ${pct(h.win)} T ${pct(h.tie)} · vs ${h.opp} ▴`;};}
 {const _u=window.uAct;window.uAct=t=>{_u(t);$("hud").classList.add("open");};}
 let histPage=0;
@@ -678,7 +715,7 @@ G.ui.broke=()=>chipDlg(true);
 function netTable(){return `<h4>Session stacks &amp; net (default buy-in ${G.START}, max top-up to ${G.MAXBI})</h4><table><tr><th>Player</th><th>Stack</th><th>Bought in</th><th>Rebuys</th><th>Top-ups</th><th>Net</th></tr>${bankNets().sort((a,b)=>b.net-a.net).map(x=>`<tr><td>${x.name}</td><td>${x.stack}</td><td>${x.buyins}</td><td>${x.rebuys}</td><td>${x.topups}</td><td class="${x.net>=0?'good':'bad'}">${x.net>=0?'+':''}${x.net}</td></tr>`).join("")}</table>`;}
 {const _rs2=renderSession;renderSession=function(){_rs2();$("sess").innerHTML=netTable()+$("sess").innerHTML;};}
 {const _rh=renderHist;window.renderHist=renderHist=function(pg){_rh(pg);$("histTot").innerHTML+=netTable();};}
-{const _rt=renderTable;renderTable=function(){_rt();if(G.seats.length&&$("gInfo")){const m=bankNets().find(x=>x.name==="Mouk");$("gInfo").innerHTML=`Hand #${G.handNo} · ${G.sitOut!==undefined?PROFILES[G.sitOut].name+" sits out · ":""}Mouk net <b class="${m.net>=0?'good':'bad'}">${m.net>=0?'+':''}${m.net}</b> (bought in ${m.buyins})`;}};}
+{const _rt=renderTable;renderTable=function(){_rt();if(G.seats.length&&$("gInfo")){const m=bankNets().find(x=>x.name==="Mouk");$("gInfo").innerHTML=`Hand #${G.handNo} · ${G.wait&&G.wait.length?"Waitlist: "+G.wait.join(", ")+" · ":""}Mouk net <b class="${m.net>=0?'good':'bad'}">${m.net>=0?'+':''}${m.net}</b> (bought in ${m.buyins})`;}};}
 
 function sndBtns(){const m=$("muteBtn"),v=$("voiceBtn");if(m)m.textContent=SND.mute?"🔇":"🔊";if(v){v.style.opacity=SND.voice&&!SND.mute?1:0.4;v.title="All-in voice: "+(SND.voice?"on":"off");}}
 window.toggleMute=()=>{SND.mute=!SND.mute;try{localStorage.setItem("plo5mute",SND.mute?"1":"0")}catch(e){}audioInit();sndBtns();};
@@ -701,10 +738,98 @@ function resumePrompt(){const s=PH.get("plo5state",null);if(!s||!s.seats||!s.sea
 window.doResume=()=>{if(!resumeState())return;renderTable();renderSession();renderHandList();setTimeout(dash,0);
   if(G.handOver)G.ui.end();else if(G.toAct===0&&canAct(G.seats[0]))G.ui.prompt(legal(0));else{gAdvance();renderTable();}};
 
+// ===== Online multiplayer (opt-in; Supabase Realtime Broadcast + Presence; host-authoritative) =====
+const MP_CONFIG={url:"https://xqnuhdqawrgbliqfpfxa.supabase.co",key:"sb_publishable_r8cXvbZl3te8Nx4iBHaQSw_wg0_NmOy"}; // publishable/anon key (client-safe). Override via Online settings.
+const MP={role:null,code:null,tr:null,pub:null,priv:{},seatTok:{},timers:{},TURN_MS:30000,AWAY_MS:60000};
+function mpCfg(){let o=null;try{o=JSON.parse(localStorage.getItem("plo5sb")||"null")}catch(e){}return {url:(o&&o.url)||MP_CONFIG.url,key:(o&&o.key)||MP_CONFIG.key};}
+function rid(n){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let s="";const r=(typeof crypto!=="undefined"&&crypto.getRandomValues)?crypto.getRandomValues(new Uint32Array(n)):Array.from({length:n},()=>Math.floor(Math.random()*4294967296));for(let i=0;i<n;i++)s+=a[r[i]%a.length];return s;}
+// Transport: Supabase (lazy CDN import) or an injected mock with the same shape.
+async function mpTransport(){if(MP.mock)return MP.mock;const c=mpCfg();if(!c.url||!c.key)throw new Error("Online settings missing (Supabase URL + key).");
+  const mod=await import("https://esm.sh/@supabase/supabase-js@2");const sb=mod.createClient(c.url,c.key);
+  return {channel(name,presKey){const ch=sb.channel(name,{config:{broadcast:{self:false,ack:false},presence:{key:presKey||""}}});
+    return {on(ev,cb){ch.on("broadcast",{event:ev},m=>cb(m.payload));return this;},onPresence(cb){ch.on("presence",{event:"sync"},()=>cb(ch.presenceState()));return this;},
+      send(ev,p){return ch.send({type:"broadcast",event:ev,payload:p});},track(o){return ch.track(o);},
+      subscribe(){return new Promise((res,rej)=>ch.subscribe(st=>{if(st==="SUBSCRIBED")res();else if(st==="CHANNEL_ERROR"||st==="TIMED_OUT")rej(new Error(st));}));},close(){return sb.removeChannel(ch);}};}};}
+// ---------- HOST ----------
+function publicState(){return {handNo:G.handNo,button:G.button,board:G.board,street:G.street,pot:potTotal(),toAct:G.handOver?-1:G.toAct,curBet:G.curBet,over:G.handOver,result:G.result,
+  log:G.log.slice(-12),meters:G.meters,
+  seats:G.seats.map((s,i)=>({name:s.name,stack:s.stack,bet:s.bet,total:s.total,folded:s.folded,allin:s.allin,human:!!(s.isUser||s.remote),away:!!(s.remote&&s.remote.away),
+    shown:G.handOver&&!s.folded&&G.seats.filter(x=>!x.folded).length>1?s.hand:null})),
+  legal:(!G.handOver&&G.seats[G.toAct]&&G.seats[G.toAct].remote)?legal(G.toAct):null};}
+function mpTick(){if(MP.role!=="host"||!MP.pub)return;MP.pub.send("state",publicState());}
+function mpSendCards(i){const s=G.seats[i];if(!s.remote)return;const ch=MP.priv[s.remote.token];if(ch)ch.send("cards",{handNo:G.handNo,hand:s.hand});}
+function mpNewHandHook(){if(MP.role!=="host")return;for(let i=1;i<8;i++){const s=G.seats[i];if(s.remote&&s.remote.away&&Date.now()-s.remote.awayAt>MP.AWAY_MS){mpLog(`${s.remote.name} left — seat returns to a bot.`);delete MP.seatTok[s.remote.token];delete s.remote;}}}
+function mpAfterDeal(){if(MP.role!=="host")return;for(let i=1;i<8;i++)mpSendCards(i);mpTick();}
+function mpLog(m){L(m);}
+function mpAwait(i){const s=G.seats[i];clearTimeout(MP.timers[i]);mpTick();
+  MP.timers[i]=setTimeout(()=>{if(G.toAct===i&&!G.handOver&&G.seats[i].remote){L(`${s.name} timed out.`);gAct(i,"fold");gAdvance();mpTick();}},s.remote.away?3000:MP.TURN_MS);}
+async function mpHost(){const tr=await mpTransport();MP.tr=tr;MP.role="host";MP.code=rid(6);
+  const pub=tr.channel("room-"+MP.code,"host");MP.pub=pub;
+  pub.on("join",async p=>{if(!p||!p.req||!p.name)return;
+      const free=[1,2,3,4,5,6,7].filter(i=>!G.seats[i].remote);const token=rid(16),name=String(p.name).slice(0,16).replace(/[<>&"']/g,"");
+      const seat=free.length?free[0]:-1;if(seat>0){G.seats[seat].remote={token,name,away:false};MP.seatTok[token]=seat;} // reserve synchronously
+      const ack=tr.channel("room-"+MP.code+"-"+p.req);await ack.subscribe();if(seat<0){ack.send("ack",{error:"Table full"});return;}
+      const priv=tr.channel("room-"+MP.code+"-"+token);await priv.subscribe();MP.priv[token]=priv;L(`${name} joins seat ${seat} (replaces a bot from next hand).`);
+      ack.send("ack",{seat,token,code:MP.code});setTimeout(()=>{try{ack.close()}catch(e){}},2000);mpTick();})
+   .on("rejoin",p=>{const seat=MP.seatTok[p&&p.token];if(seat===undefined)return;const r=G.seats[seat].remote;if(!r)return;r.away=false;mpSendCards(seat);mpTick();})
+   .on("intent",p=>{const seat=MP.seatTok[p&&p.token];if(seat===undefined)return;if(G.handOver||G.toAct!==seat||!G.seats[seat].remote)return;
+      const ok=["fold","check","call","raise","allin"];if(!ok.includes(p.type))return;clearTimeout(MP.timers[seat]);
+      const lg=legal(seat);if(p.type==="allin")gAct(seat,"raise",lg.maxTo);else gAct(seat,p.type,+p.to||0);gAdvance();mpTick();})
+   .onPresence(st=>{const here=new Set(Object.keys(st));for(let i=1;i<8;i++){const r=G.seats[i].remote;if(!r)continue;if(!here.has(r.token)&&!r.away){r.away=true;r.awayAt=Date.now();L(`${r.name} disconnected.`);if(G.toAct===i&&!G.handOver)mpAwait(i);}else if(here.has(r.token)&&r.away){r.away=false;}}mpTick();});
+  await pub.subscribe();await pub.track({role:"host"});
+  return {code:MP.code,link:(typeof location!=="undefined"?location.origin+location.pathname:"")+"?room="+MP.code};}
+// ---------- CLIENT ----------
+function mpClient(tr,code,name,onState,onCards,savedToken){const C={seat:null,token:savedToken||null,state:null,hand:null,code};
+  const pub=tr.channel("room-"+code,null);C.pub=pub;
+  C.ready=(async()=>{pub.on("state",s=>{C.state=s;onState&&onState(C);});
+    if(!C.token){const req=rid(16);const ack=tr.channel("room-"+code+"-"+req);
+      const got=new Promise((res,rej)=>{ack.on("ack",a=>a.error?rej(new Error(a.error)):res(a));});await ack.subscribe();await pub.subscribe();
+      pub.send("join",{name,req});const a=await got;C.seat=a.seat;C.token=a.token;try{ack.close()}catch(e){}}
+    else await pub.subscribe();
+    const priv=tr.channel("room-"+code+"-"+C.token);priv.on("cards",c=>{C.hand=c.hand;C.handNo=c.handNo;onCards&&onCards(C);});await priv.subscribe();
+    await pub.track({token:C.token});
+    // re-key presence to the seat token so the host can see who is here
+    if(savedToken)pub.send("rejoin",{token:C.token});return C;})();
+  C.act=(type,to)=>pub.send("intent",{token:C.token,type,to});
+  return C;}
+// ---------- Browser UI glue ----------
+let MPC=null;
+function mpClientRender(C){const s=C.state;if(!s)return;if(C.seat===null&&C.token){}
+  const me=C.seat===null?(s.seats.findIndex(x=>x.human&&x.name===C.name)):C.seat;if(C.seat===null&&me>0)C.seat=me;
+  const rot=i=>(i+C.seat)%8;
+  const seats=[0,1,2,3,4,5,6,7].map(d=>{const i=rot(d),x=s.seats[i];return {name:x.name+(x.away?" (away)":""),stack:x.stack,bet:x.bet,total:x.total,folded:x.folded,allin:x.allin,isUser:i===C.seat,hand:i===C.seat&&C.hand&&C.handNo===s.handNo?C.hand:(x.shown||[-1,-1,-1,-1,-1])};});
+  G.meters=s.meters||G.meters;
+  $("gTable").innerHTML=tableHTML({seats,board:s.board,button:(s.button-C.seat+8)%8,pot:s.pot,toAct:s.toAct<0?-1:(s.toAct-C.seat+8)%8,thinking:-1,revealAll:false,label:s.over?s.result:STREETS[s.street]});
+  $("gInfo").innerHTML=`Online room <b>${C.code}</b> · seat ${C.seat} · hand #${s.handNo}`;
+  if(s.toAct===C.seat&&s.legal){const lg=s.legal;$("gCtl").innerHTML=`<div class="abar"><span class="tocall">To call <b>${lg.toCall}</b> · Pot <b>${lg.pot}</b></span>`+(lg.toCall>0?`<button class="fold" onclick="MPC.act('fold')">Fold</button><button onclick="MPC.act('call')">Call ${lg.toCall}</button>`:`<button onclick="MPC.act('check')">Check</button>`)+
+    (lg.canRaise?`<span class="sizer"><button class="q" onclick="setAmt(${lg.minTo})">Min</button><button class="q" onclick="setAmt(${lg.maxTo})">Pot</button><input type="range" id="gAmt" min="${lg.minTo}" max="${lg.maxTo}" value="${lg.minTo}" oninput="gAmtL.textContent=this.value"><span id="gAmtL">${lg.minTo}</span><button class="raise" onclick="MPC.act('raise',+gAmt.value)">Raise to</button></span>`:"")+`</div>`;}
+  else $("gCtl").innerHTML=`<div class="abar"><span class="tocall">${s.over?s.result+" — waiting for host to deal":"Waiting for "+(s.seats[s.toAct]||{}).name+"…"}</span></div>`;
+  const mine=C.hand&&C.handNo===s.handNo&&!s.seats[C.seat].folded;if(mine&&s.board.length!==C.lastEqB){C.lastEqB=s.board.length;const n=s.seats.filter((x,i)=>i!==C.seat&&!x.folded).length;
+    const e=n?equity(C.hand,s.board,n,800):1;$("hudTog").innerHTML=`My equity <b>${pct(e)}</b> vs ${n} ▴`;$("dash").innerHTML=`<h3>My odds · ${STREETS[s.street]}</h3><div class="big">${pct(e)}</div><div>vs ${n} active · fair share ${pct(1/(n+1))}</div><p class="note">Only your own cards are used. Hints are host-only.</p>`;}}
+window.mpUIHost=async()=>{try{const r=await mpHost();$("mpOut").innerHTML=`Room <b>${r.code}</b> — share: <input readonly value="${r.link}" style="width:100%" onclick="this.select()"><p class="note">Joiners take an empty seat from the next hand. Empty seats stay bots.</p>`;
+  const st=G.ui.street,en=G.ui.end;G.ui.street=function(){st();mpTick();};G.ui.end=function(){en();mpTick();};mpTick();}catch(e){$("mpOut").textContent="Couldn't host: "+e.message;}};
+window.mpUIJoin=async()=>{const code=$("mpCode").value.trim().toUpperCase(),name=$("mpName").value.trim()||"Guest";let saved=null;try{saved=JSON.parse(localStorage.getItem("plo5mp")||"null")}catch(e){}
+  const tok=saved&&saved.code===code?saved.token:null;
+  try{const tr=await mpTransport();MP.role="client";MPC=mpClient(tr,code,name,mpClientRender,mpClientRender,tok);MPC.name=name;if(tok)MPC.seat=saved.seat;await MPC.ready;
+    localStorage.setItem("plo5mp",JSON.stringify({code,token:MPC.token,seat:MPC.seat,name}));$("mpOut").innerHTML=`Joined room <b>${code}</b> as ${name} (seat ${MPC.seat}).`;tg("pOnline");}
+  catch(e){$("mpOut").textContent="Couldn't join: "+e.message;}};
+window.mpSaveCfg=()=>{localStorage.setItem("plo5sb",JSON.stringify({url:$("mpUrl").value.trim(),key:$("mpKey").value.trim()}));$("mpOut").textContent="Saved online settings.";};
+if(typeof location!=="undefined"&&location.search){const m=location.search.match(/room=([A-Z0-9]{6})/i);if(m)setTimeout(()=>{$("mpCode").value=m[1].toUpperCase();tg("pOnline");},50);}
+
+function meterBtns(n){const m=G.meters&&G.meters[n];if(!m)return"";return `<span class="meters"><button class="mt" title="Drinks (tap +1, wraps at 9)" onclick="event.stopPropagation();bump('${n}','drink');renderWait()">🥃<i>${m.drink}</i></button><button class="mt crack" title="Tilt (tap +1, wraps at 9)" onclick="event.stopPropagation();bump('${n}','tilt');renderWait()">🂠<i>${m.tilt}</i></button></span>`;}
+window.renderWait=()=>{tableInit();G.meters=Object.assign(freshMeters(),G.meters||{});const open=G.leave.length>0;
+  $("wTmpl").innerHTML=PROFILES.map(p=>`<option>${p.name}</option>`).join("");
+  $("waitBody").innerHTML=`<h4>Seated</h4><table>${G.table.map((n,k)=>{const s=G.seats[k+1];const human=s&&s.remote;return `<tr><td>Seat ${k+1}</td><td>${human?s.remote.name+" (online)":n||"open"}</td><td>${n&&!human?meterBtns(n):""}</td><td>${n&&!human?(G.leave.includes(n)?"<i>leaving after this hand</i>":`<button class="sm" onclick="leaveSeat('${n}');autosave();renderWait()">Leave seat</button>`):""}</td></tr>`;}).join("")}</table>
+  <h4>Waitlist</h4>${G.wait.length?`<table>${G.wait.map((n,i)=>{const p=profByName(n);return `<tr><td>${i+1}.</td><td title="${p?p.blurb:""}"><b>${n}</b><div class="note">${p?p.blurb:""}</div></td><td>${meterBtns(n)}</td><td>${open?`<button class="sm" onclick="callUp('${n}');autosave();renderWait()">Call up</button>`:`<span class="note">${i===0?"next up":""}</span>`}</td></tr>`;}).join("")}</table>`:"<p class='note'>Empty.</p>"}
+  <p class="note">${open?`A seat opens after this hand — offered to <b>${G.wait[0]||"nobody"}</b> unless you call up someone else.`:"When a seat opens (someone leaves or busts and won't rebuy), the top of the waitlist is offered it."}</p>`;};
+
 applyOrient();
 if(typeof window.innerWidth==="number"&&window.innerWidth>=1100&&window.innerHeight>=600)document.getElementById("hud").classList.add("open");
 function fitHud(){const b=document.getElementById("bottom");if(b&&b.offsetHeight!==undefined)document.documentElement.style.setProperty("--bottomH",(b.offsetHeight+6)+"px");}
 if(typeof ResizeObserver==="function")new ResizeObserver(fitHud).observe(document.getElementById("bottom"));
 if(typeof window.addEventListener==="function")window.addEventListener("resize",()=>{applyOrient();if(RV)showFrame();else if(G.seats.length)renderTable();});
 if(G.seats.length)renderTable();
+
+if(typeof location!=="undefined"&&location.hash==="#demo"){document.body.classList.add("demo");G.speed=0;gInit();gNewHand();}
+else setTimeout(resumePrompt,0);
 </script></body></html>

@@ -1,0 +1,17 @@
+import {createClient} from '@supabase/supabase-js';import ws from 'ws';
+const mk=()=>createClient(process.env.SUPABASE_URL,process.env.SUPABASE_PUBLISHABLE_KEY,{realtime:{transport:ws,params:{eventsPerSecond:20}}});
+const a=mk(),b=mk();const room='room-SMOKE'+Math.floor(Math.random()*1e6);
+const sub=ch=>new Promise((res,rej)=>ch.subscribe(s=>{if(s==='SUBSCRIBED')res();else if(s!=='CLOSED')rej(new Error(s))}));
+const ca=a.channel(room,{config:{broadcast:{self:false},presence:{key:'host'}}}),cb=b.channel(room,{config:{broadcast:{self:false},presence:{key:'tokB'}}});
+const got=new Promise(r=>cb.on('broadcast',{event:'state'},m=>r(m.payload)));
+const back=new Promise(r=>ca.on('broadcast',{event:'intent'},m=>r(m.payload)));
+let presOK=new Promise(r=>ca.on('presence',{event:'sync'},()=>{const st=ca.presenceState();if(st.tokB)r(Object.keys(st));}));
+const t0=Date.now();await sub(ca);await sub(cb);await cb.track({token:'tokB'});await ca.track({role:'host'});
+await new Promise(r=>setTimeout(r,500));
+await ca.send({type:'broadcast',event:'state',payload:{handNo:1,pot:3}});
+const p=await Promise.race([got,new Promise((_,j)=>setTimeout(()=>j(new Error('timeout state')),8000))]);
+await cb.send({type:'broadcast',event:'intent',payload:{type:'call'}});
+const q=await Promise.race([back,new Promise((_,j)=>setTimeout(()=>j(new Error('timeout intent')),8000))]);
+const pr=await Promise.race([presOK,new Promise((_,j)=>setTimeout(()=>j(new Error('timeout presence')),8000))]);
+console.log('LIVE OK: client got',JSON.stringify(p),'host got',JSON.stringify(q),'presence keys',pr,'in',Date.now()-t0,'ms');
+await a.removeAllChannels();await b.removeAllChannels();process.exit(0);
