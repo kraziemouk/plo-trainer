@@ -1,0 +1,477 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PLO5 Odds Trainer — 8-handed</title>
+<style>
+body{--bg:#14171c;--fg:#e6e8eb;--card:#1e232b;--mut:#9aa3ad;--acc:#4ea1ff;--good:#3ecf8e;--bad:#ff6b6b;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,-apple-system,Segoe UI,sans-serif;margin:0}
+body.light{--bg:#f6f7f9;--fg:#1b1f24;--card:#fff;--mut:#5b6570;--acc:#0b63d6;--good:#14864f;--bad:#c62828}
+main{max-width:1280px;margin:auto;padding:20px}header{display:flex;justify-content:space-between;align-items:center}
+section{background:var(--card);border-radius:12px;padding:18px 22px;margin:18px 0;box-shadow:0 1px 4px #0003}
+.lesson{border-left:4px solid var(--acc)}h1{margin:.3em 0}h2{margin-top:0}
+table{border-collapse:collapse;margin:8px 0;font-size:14px}td,th{padding:4px 10px;border-bottom:1px solid #8883;text-align:left}
+.bar{height:10px;background:var(--acc);border-radius:3px}.hl td{font-weight:700}
+button{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:7px 14px;cursor:pointer;margin:3px 0;font-size:14px}
+input,select{background:var(--bg);color:var(--fg);border:1px solid #8886;border-radius:6px;padding:6px;font:inherit}
+.card{display:inline-block;border:1px solid #8886;border-radius:4px;padding:0 4px;margin:1px;font-family:monospace;background:var(--bg)}.red{color:#e5484d}
+.good{color:var(--good)}.bad{color:var(--bad)}.note,.prog{color:var(--mut);font-size:13px}.err{color:var(--bad)}.q{margin-bottom:12px}
+.gwrap{display:flex;gap:14px;flex-wrap:wrap}.gmain{flex:1 1 560px}.dash{flex:0 0 260px;background:var(--bg);border-radius:10px;padding:10px;font-size:14px}.big{font-size:34px;font-weight:700;color:var(--acc)}
+.seats{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px;margin:8px 0}.seat{border:1px solid #8885;border-radius:8px;padding:5px 8px;font-size:13px}.blurb{color:var(--mut);font-size:11px}.dots span{animation:bl 1.2s infinite}.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}@keyframes bl{0%,100%{opacity:.2}50%{opacity:1}}.seat.thinking{border-color:orange}.seat.fold{opacity:.45}.seat.act{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc)}
+.ctl{margin:8px 0}.hint{margin:6px 0;font-size:14px}#gLog{max-height:220px;overflow:auto;background:var(--bg);padding:8px;border-radius:8px;font-size:12px;white-space:pre-wrap}summary{cursor:pointer;margin-top:10px}
+
+.tablewrap{position:relative;width:100%;aspect-ratio:16/10;min-height:380px;margin:30px 0 40px}
+.felt{position:absolute;inset:9% 9%;border-radius:50%/50%;background:radial-gradient(ellipse at center,#2e8b57 0%,#1f6b42 60%,#154d30 100%);box-shadow:0 0 0 14px #5a3a1e,0 0 0 18px #2b1a0b,0 10px 30px #000a inset,0 8px 24px #0008}
+.center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;color:#fff}
+.potlbl{background:#0006;border-radius:12px;padding:2px 12px;display:inline-block;margin-bottom:6px}.street{font-size:12px;opacity:.85;margin-top:4px;max-width:340px}
+.board{display:flex;gap:5px;justify-content:center}
+.pc{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:42px;height:60px;border-radius:6px;background:#fdfdfb;color:#111;border:1px solid #999;box-shadow:0 2px 4px #0006;font-family:Georgia,serif;line-height:1;margin:0 1px;vertical-align:middle}
+.pc b{font-size:19px}.pc i{font-style:normal;font-size:20px}.pc.red{color:#d10f1f}
+.pc.sm{width:22px;height:32px;margin:0 -3px}.pc.sm b{font-size:11px}.pc.sm i{font-size:11px}
+.pc.back{background:repeating-linear-gradient(45deg,#1b3d8f 0 4px,#2a56c0 4px 8px);border:2px solid #fff}
+.pc.slot{background:#ffffff14;border:1px dashed #fff5;box-shadow:none}
+.seatT{position:absolute;transform:translate(-50%,-50%);text-align:center;z-index:2;width:150px}
+.seatT .tag{background:#111c;color:#fff;border:2px solid #555;border-radius:10px;padding:3px 6px;font-size:13px}
+.seatT .stack{color:#ffd54a;font-weight:700}.seatT .blurb{display:none}.seatT:hover .blurb{display:block;color:#ccc;font-size:11px}
+.seatT.me .tag{border-color:var(--acc);background:#0b2a55e6}.seatT.me{width:250px}.seatT.me .hcards{white-space:nowrap}
+.seatT.fold{opacity:.4}.seatT.act .tag{border-color:#ffd54a;box-shadow:0 0 12px #ffd54a}.seatT.thinking .tag{border-color:orange;box-shadow:0 0 14px orange}
+.hcards{min-height:34px;margin-bottom:2px}
+.bet{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:3px;z-index:1}
+.chips{display:inline-flex;flex-direction:column-reverse}.chip{width:18px;height:5px;border-radius:50%;background:#d33;border:1px solid #fff;margin-top:-1px}
+.betamt{background:#000a;color:#fff;font-size:12px;padding:0 5px;border-radius:8px}
+.marker{position:absolute;transform:translate(-50%,-50%);width:22px;height:22px;border-radius:50%;font:700 10px/22px sans-serif;text-align:center;z-index:3}
+.marker.dealer{background:#fff;color:#000;border:2px solid #999}.marker.blind{background:#1e88e5;color:#fff}
+.abar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:var(--bg);padding:8px;border-radius:10px}.abar button{min-width:70px}.abar .fold{background:#9e2a2a}.abar .raise{background:#2e7d32}.abar .q{background:#555;min-width:auto}
+.sizer{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}#gAmt{width:160px}
+.hintbox{margin:8px 0;padding:8px;border-radius:8px;border-left:4px solid var(--acc);background:var(--bg);font-size:14px}.hintbox.ok{border-color:var(--good)}.hintbox.bad{border-color:var(--bad)}
+.rvbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:4px 0}.eqbar{height:10px;background:#8884;border-radius:5px;overflow:hidden;display:flex;margin:4px 0}.eqbar .w{background:var(--good)}.eqbar .t{background:#e0b400}
+.two{display:flex;gap:20px;flex-wrap:wrap}.opts{margin:6px 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.gwrap{display:flex;gap:14px;flex-wrap:wrap}.gmain{flex:1 1 600px;min-width:0}.dash{flex:1 1 240px;max-width:320px}
+@media (max-width:900px){.dash{max-width:none}.seatT{width:120px}.pc{width:34px;height:50px}.pc b{font-size:15px}.pc i{font-size:16px}}
+body.demo main>section:not(#practice),body.demo main>header,body.demo main>p{display:none}
+</style></head><body><main>
+<header><h1>♠ PLO5 Odds Trainer <small style="font-size:14px;color:var(--mut)">8-handed · five-card Pot-Limit Omaha</small></h1><button id="theme">Dark / Light</button></header>
+<section class="lesson"><h2>Lesson 1 — The one rule that runs everything</h2>
+<p>In Omaha you must use <b>exactly two</b> of your hole cards and <b>exactly three</b> from the board. Five-card PLO gives you 5 hole cards, so you hold <b>10</b> two-card combinations (PLO4: 6). Consequences: four to a flush on board with one suited card in hand = no flush; trips in your hand play as only a pair; a four-straight board needs two of your cards to make a straight.</p>
+<p>At an 8-handed table, 40 of the 52 cards are dealt to players. Every number in this page is computed live in your browser by exact enumeration or Monte Carlo simulation — nothing is hard-coded.</p></section>
+
+<section><h2>Tool 1 — Preflop hand category frequencies (exact)</h2>
+<p>Enumerates all 2,598,960 five-card starting hands. Takes a few seconds.</p><button id="pfRun">Enumerate all hands</button> <span class="prog" id="pfProg"></span><div id="pfOut"></div></section>
+
+<section class="lesson"><h2>Lesson 2 — What the starting-hand numbers mean</h2>
+<p>With 5 cards, <b>most hands contain a pair</b> and essentially every hand has at least two cards of one suit — "suited" is the default, so being suited is worth far less than in PLO4. Double-suited hands are common. What separates hands is <b>nut</b> potential: suited Aces, connected rundowns with no gaps, and high pairs that make top sets. Your opponents are also holding 10 combos each, so the average winning hand is stronger.</p></section>
+
+<section><h2>Tool 2 — PLO4 vs PLO5: how often does one player make a flush / straight by the river?</h2>
+<p>Deals a random 5-card hand and board; the PLO4 hand is the first 4 of the same 5 cards, so the difference is purely the extra card.</p>
+Trials: <select id="cmpN"><option>20000</option><option selected>60000</option><option>200000</option></select> <button id="cmpRun">Run simulation</button> <span class="prog" id="cmpProg"></span><div id="cmpOut"></div></section>
+
+<section class="lesson"><h2>Lesson 3 — Outs, the Rule of 4 and 2, and the 2-card trap</h2>
+<p>An <b>out</b> is an unseen card that improves you to your target hand. Rough conversion: on the flop, outs × 4 ≈ % to hit by river; on the turn, outs × 2 ≈ % to hit on the river. Common PLO5 flop draws: flush draw 9 outs (~35% by river), open-ended straight 8 (~31.5%), 13-card wrap (~48%), 16–20-out wraps (55–70%), wrap + flush draw 20+ (65%+). In Omaha, only count outs your <b>two</b> hole cards can use, and discount outs that pair the board (they can give an opponent a full house) or make a non-nut flush. The calculator below counts outs exactly by trying every unseen card under the 2+3 rule.</p></section>
+
+<section><h2>Tool 3 — Drawing-odds &amp; equity calculator</h2>
+<p>Enter cards like <code>AhKh7c8d2s</code> (T = ten; suits s h d c).</p>
+Hole cards (5): <input id="hIn" value="AhKh7c8d2s" size="18"> Board (3 or 4): <input id="bIn" value="Qh5h3c" size="14"><br>
+Target: <select id="tgt"><option value="0">Any improvement</option><option value="1">Pair+</option><option value="2">Two pair+</option><option value="3">Trips+</option><option value="4" selected>Straight+</option><option value="5">Flush+</option><option value="6">Full house+</option></select>
+Equity trials per opponent count: <select id="eqN"><option>1000</option><option selected>3000</option><option>10000</option></select>
+<button id="calcRun">Calculate</button><div id="calcOut"></div></section>
+
+<section class="lesson"><h2>Lesson 4 — Equity shrinks as players are added, but not evenly</h2>
+<p>Made hands without redraws (overpairs, two pair, even the current nut straight) lose value fast multiway, because every extra 5-card hand brings 10 more ways to draw out. Big draws hold value better — they are often <i>ahead</i> of their fair share 1/(N+1) multiway because they win big pots when they get there. Sets are strong but in PLO5 set-over-set and flush/straight runouts happen often. Compare each cell to the fair share, not to 50%.</p></section>
+
+<section><h2>Tool 4 — Equity of typical flop holdings vs 1–7 opponents</h2>
+Trials per cell: <select id="tblN"><option>1000</option><option selected>2500</option><option>6000</option></select> <button id="tblRun">Run table</button> <span class="prog" id="tblProg"></span><div id="tblOut"></div></section>
+
+<section class="lesson"><h2>Lesson 5 — Putting it together at 8-handed</h2>
+<p>Preflop: favor hands where all 5 cards work together (nut suits, connected ranks, high pairs); avoid trips and disconnected "danglers." Flop: compare your equity to pot odds — to call a bet of B into pot P you need equity &gt; B ÷ (P + 2B) (pot-sized bet → 33%). Multiway, demand nut draws and redraws; second-nut flushes and bottom-end straights are frequent losers.</p></section>
+
+<section class="lesson"><h2>Lesson 6 — Practice at an 8-handed loose table</h2><p>Seven of eight home-game regulars sit in each hand (one sits out, rotating or your choice), each with a profile: Willy, Milty, David N, Rich, Todd, Rick, Yum Yum and L. Learn their tendencies; when Milty bets, he has it. Hints appear only after you act. Stacks reset to 100 BB (200 chips, blinds 1/2) every hand; betting is pot-limit. Watch the dashboard: your equity is recomputed each street versus the players still in. After every decision you get a heuristic "solver-style" hint (equity vs pot odds, fair share, outs, position, number of opponents) — it's a rule-of-thumb coach, <b>not</b> real solver output. Deviations can be replayed with the identical deck and opponent behavior.</p></section>
+<section id="practice"><h2>Practice table — 8-handed PLO5 (1/2, pot-limit)</h2>
+<div class="opts"><button id="gStart">Deal new hand</button> Sits out: <select id="gSitOut"></select> Think-time: <select id="gSpeed"><option value="0">Instant</option><option value="0.5">Fast</option><option value="1" selected>Realistic</option></select> <label><input type="checkbox" id="gWeighted" checked> Weight opponents to loose range</label> Equity trials: <select id="gIters"><option>800</option><option selected>2000</option><option>5000</option></select></div>
+<div id="gInfo" class="note"></div>
+<div class="gwrap"><div class="gmain"><div id="gTable" class="tablewrap"></div>
+<div id="gReplay" class="rvbar" style="display:none"><button onclick="stepReplay('pst')">⏮ Street</button><button onclick="stepReplay('prev')">◀ Action</button><button onclick="stepReplay('next')">Action ▶</button><button onclick="stepReplay('nst')">Street ⏭</button><span id="gRvMsg"></span><button onclick="closeReplay()">✕ Close replay</button></div>
+<div id="gCtl"></div><div id="gHint"></div></div><aside id="dash" class="dash"><p class="note">Deal a hand — Mouk's live equity appears here.</p></aside></div>
+<div class="opts">Replay a completed hand: <select id="gHands"></select> <button onclick="openReplay(+gHands.value)">▶ Step through</button></div>
+<details><summary><b>Session log &amp; leak finder</b> (open anytime)</summary><div id="sess"><p class="note">No decisions yet.</p></div></details>
+<details><summary>Hand history text</summary><pre id="gLog"></pre></details></section>
+<section><h2>Quiz</h2><div id="quiz"></div></section>
+<p class="note">All evaluation uses a built-in Omaha evaluator (2 hole + 3 board, best of all 10×10 combinations). Simulated numbers vary slightly run to run.</p>
+</main><script>// ==== CORE (shared) ====
+const RANKS="23456789TJQKA",SUITS="shdc",SUITSYM={s:"♠",h:"♥",d:"♦",c:"♣"};
+function parseCard(s){s=s.trim();if(s.length!==2)return -1;const r=RANKS.indexOf(s[0].toUpperCase()),u=SUITS.indexOf(s[1].toLowerCase());return r<0||u<0?-1:r*4+u;}
+function cardStr(c){return RANKS[c>>2]+SUITS[c&3];}
+function parseCards(t){const m=t.replace(/[,\s]+/g,"").match(/.{1,2}/g)||[];return m.map(parseCard);}
+const CATS=["High card","Pair","Two pair","Trips","Straight","Flush","Full house","Quads","Straight flush"];
+const cnt=new Int8Array(13);
+function eval5(a,b,c,d,e){
+  const cs=[a,b,c,d,e];cnt.fill(0);let mask=0;const s=a&3;let fl=true;
+  for(const x of cs){const r=x>>2;cnt[r]++;mask|=1<<r;if((x&3)!==s)fl=false;}
+  let st=-1;
+  if((mask&(mask-1))&&popc(mask)===5){for(let h=12;h>=4;h--){const m=31<<(h-4);if((mask&m)===m){st=h;break;}}if(st<0&&mask===0b1000000001111)st=3;}
+  if(st>=0)return (fl?8:4)*1048576+st;
+  const g=[];for(let r=12;r>=0;r--)if(cnt[r])g.push(cnt[r]*16+r);g.sort((x,y)=>y-x);
+  let k=0;for(const v of g)k=k*16+(v&15);while(g.length<5){k*=16;g.push(0);} // pad
+  if(fl)return 5*1048576+k;
+  const top=g[0]>>4,sec=g[1]>>4;let cat;
+  if(top===4)cat=7;else if(top===3&&sec===2)cat=6;else if(top===3)cat=3;else if(top===2&&sec===2)cat=2;else if(top===2)cat=1;else cat=0;
+  return cat*1048576+k;
+}
+function popc(m){let n=0;while(m){m&=m-1;n++;}return n;}
+// Omaha: exactly 2 from hand (4 or 5 cards), exactly 3 from board (3-5 cards)
+function evalOmaha(h,b){
+  let best=-1;const hl=h.length,bl=b.length;
+  for(let i=0;i<hl;i++)for(let j=i+1;j<hl;j++)
+   for(let x=0;x<bl;x++)for(let y=x+1;y<bl;y++)for(let z=y+1;z<bl;z++){
+     const v=eval5(h[i],h[j],b[x],b[y],b[z]);if(v>best)best=v;}
+  return best;
+}
+function catOf(v){return Math.floor(v/1048576);}
+function shuffleDraw(deck,n){ // partial Fisher-Yates, returns first n
+  for(let i=0;i<n;i++){const j=i+Math.floor(Math.random()*(deck.length-i));const t=deck[i];deck[i]=deck[j];deck[j]=t;}
+}
+// equity of hero vs nOpp random hands (hand size hs), to river
+function equity(hero,board,nOpp,iters,hs){
+  hs=hs||5;const used=new Set([...hero,...board]);const deck=[];for(let c=0;c<52;c++)if(!used.has(c))deck.push(c);
+  const need=5-board.length;let tot=0;
+  for(let it=0;it<iters;it++){
+    shuffleDraw(deck,need+nOpp*hs);
+    const B=board.concat(deck.slice(0,need));const hv=evalOmaha(hero,B);
+    let best=hv,cntBest=1,heroBest=true;
+    for(let o=0;o<nOpp;o++){const oh=deck.slice(need+o*hs,need+o*hs+hs);const v=evalOmaha(oh,B);
+      if(v>best){best=v;cntBest=1;heroBest=false;}else if(v===best){cntBest++;}}
+    if(heroBest)tot+=1/cntBest;
+  }
+  return tot/iters;
+}
+// outs: cards improving hero's category
+function outsInfo(hero,board,minCat){
+  const used=new Set([...hero,...board]);const deck=[];for(let c=0;c<52;c++)if(!used.has(c))deck.push(c);
+  const cur0=catOf(evalOmaha(hero,board));const cur=Math.max(cur0,(minCat||0)-1);const outs=[];const byCat={};
+  for(const c of deck){const k=catOf(evalOmaha(hero,board.concat([c])));if(k>cur){outs.push(c);byCat[k]=(byCat[k]||[]).concat([c]);}}
+  let river=null;
+  if(board.length===3){let hit=0,n=0;for(let i=0;i<deck.length;i++)for(let j=i+1;j<deck.length;j++){n++;if(catOf(evalOmaha(hero,board.concat([deck[i],deck[j]])))>cur)hit++;}river=hit/n;}
+  return {cur:cur0,outs,byCat,unseen:deck.length,turn:outs.length/deck.length,river};
+}
+const $=id=>document.getElementById(id);
+const pct=x=>(100*x).toFixed(1)+"%";
+function fmtCards(cs){return cs.map(c=>{const s=SUITS[c&3];return `<span class="card ${s==='h'||s==='d'?'red':''}">${RANKS[c>>2]}${SUITSYM[s]}</span>`}).join("");}
+function chunked(total,step,work,progress,done){let i=0;(function go(){const end=Math.min(total,i+step);for(;i<end;i++)work(i);progress&&progress(i/total);if(i<total)setTimeout(go,0);else done();})();}
+// theme
+$("theme").onclick=()=>document.body.classList.toggle("light");
+// ===== 1. Preflop exact enumeration =====
+function classify(h){
+  const rc=new Int8Array(13),sc=[0,0,0,0];let mask=0;
+  for(const c of h){rc[c>>2]++;sc[c&3]++;mask|=1<<(c>>2);}
+  let pairs=0,trips=0,quads=0;for(const v of rc){if(v===2)pairs++;else if(v===3)trips++;else if(v===4)quads++;}
+  let pc=quads?"Quads":trips&&pairs?"Full house (trips+pair)":trips?"Trips":pairs===2?"Two pair":pairs===1?"One pair":"No pair";
+  const ss=sc.filter(x=>x>=2).length,mx=Math.max(...sc);
+  let su=mx===1?"Rainbow (impossible w/5)":ss>=2?"Double-suited":mx===2?"Single-suited (2)":mx===3?"3 of a suit":mx===4?"4 of a suit":"5 of a suit";
+  // longest run of distinct consecutive ranks (A plays low too)
+  const m2=mask|((mask>>12)&1?1<<13:0);let ext=(mask<<1)|((mask>>12)&1);let best=0,run=0;for(let r=0;r<14;r++){if(ext>>r&1){run++;best=Math.max(best,run);}else run=0;}
+  return {pc,su,run:best,aces:rc[12]};
+}
+$("pfRun").onclick=()=>{
+  const P={},S={},R={};let n=0,acesSuited=0;const tot=2598960;
+  // enumerate combos via nested loops flattened over a=0..47
+  const as=[];for(let a=0;a<48;a++)as.push(a);
+  chunked(48,1,ai=>{const a=as[ai];for(let b=a+1;b<49;b++)for(let c=b+1;c<50;c++)for(let d=c+1;d<51;d++)for(let e=d+1;e<52;e++){
+    const k=classify([a,b,c,d,e]);P[k.pc]=(P[k.pc]||0)+1;S[k.su]=(S[k.su]||0)+1;const rk=k.run>=5?"5-card rundown":k.run===4?"4 in a row (+1)":k.run===3?"3 in a row":"No 3-card run";R[rk]=(R[rk]||0)+1;n++;}},
+   p=>$("pfProg").textContent="Enumerating… "+pct(p),
+   ()=>{$("pfProg").textContent=`Done: exactly ${n.toLocaleString()} hands enumerated (C(52,5)=2,598,960).`;
+     const tb=(o,t)=>`<h4>${t}</h4><table>${Object.entries(o).sort((x,y)=>y[1]-x[1]).map(([k,v])=>`<tr><td>${k}</td><td>${v.toLocaleString()}</td><td>${pct(v/n)}</td><td><div class="bar" style="width:${(300*v/n).toFixed(0)}px"></div></td></tr>`).join("")}</table>`;
+     $("pfOut").innerHTML=tb(P,"Pairing")+tb(S,"Suitedness")+tb(R,"Connectedness (longest run of consecutive ranks, A high or low)");});
+};
+// ===== 2. 4 vs 5 card =====
+$("cmpRun").onclick=()=>{
+  const N=+$("cmpN").value;const res={4:new Array(9).fill(0),5:new Array(9).fill(0)};const deck=[...Array(52).keys()];
+  chunked(N,500,()=>{shuffleDraw(deck,10);const B=deck.slice(5,10);for(const hs of[4,5]){const h=deck.slice(0,hs);res[hs][catOf(evalOmaha(h,B))]++;}},
+   p=>$("cmpProg").textContent="Simulating… "+pct(p),
+   ()=>{$("cmpProg").textContent=`${N.toLocaleString()} random hands dealt to the river (same board, 4-card hand = first 4 of the 5).`;
+    const atl=(a,k)=>a.slice(k).reduce((x,y)=>x+y,0)/N;
+    let h=`<table><tr><th>Final hand by river (one player)</th><th>PLO4</th><th>PLO5</th></tr>`;
+    for(let k=8;k>=0;k--)h+=`<tr><td>${CATS[k]}</td><td>${pct(res[4][k]/N)}</td><td>${pct(res[5][k]/N)}</td></tr>`;
+    h+=`<tr class="hl"><td>Flush or better</td><td>${pct(atl(res[4],5))}</td><td>${pct(atl(res[5],5))}</td></tr><tr class="hl"><td>Straight or better</td><td>${pct(atl(res[4],4))}</td><td>${pct(atl(res[5],4))}</td></tr></table>`;
+    $("cmpOut").innerHTML=h;});
+};
+// ===== 3. Calculator =====
+$("calcRun").onclick=()=>{
+  const h=parseCards($("hIn").value),b=parseCards($("bIn").value),out=$("calcOut");
+  const all=h.concat(b);
+  if(h.length!==5||!(b.length===3||b.length===4))return out.innerHTML="<p class='err'>Need exactly 5 hole cards and 3 or 4 board cards, e.g. AhKh7c8d2s / Qh5h3c</p>";
+  if(all.some(c=>c<0)||new Set(all).size!==all.length)return out.innerHTML="<p class='err'>Invalid or duplicate card.</p>";
+  const target=+$("tgt").value;const o=outsInfo(h,b,target);
+  let s=`<p>Hand: ${fmtCards(h)} Board: ${fmtCards(b)}</p><p>Current best Omaha hand (2 from hand + 3 from board): <b>${CATS[o.cur]}</b></p>`;
+  s+=`<p><b>${o.outs.length} outs</b> to make ${target?CATS[target]+" or better":"any better category"} on the next card (of ${o.unseen} unseen). Next card: <b>${pct(o.turn)}</b>`+(o.river!==null?` · By the river (exact, all turn+river pairs): <b>${pct(o.river)}</b> · Rule of 4 estimate: ${Math.min(100,4*o.outs.length)}%`:` · Rule of 2 estimate: ${2*o.outs.length}%`)+`</p>`;
+  for(const k of Object.keys(o.byCat).sort((a,b)=>b-a))s+=`<div>${CATS[k]}: ${fmtCards(o.byCat[k])}</div>`;
+  s+=`<p class="note">Outs ignore whether opponents beat you (e.g., your flush card may pair the board). Equity below accounts for that.</p><div id="eqOut">Computing equity vs 1–7 random 5-card hands…</div>`;
+  out.innerHTML=s;const it=+$("eqN").value;const rows=[];
+  chunked(7,1,i=>rows.push(equity(h,b,i+1,it)),p=>{},()=>{$("eqOut").innerHTML=`<table><tr><th>Opponents</th>${rows.map((_,i)=>`<th>${i+1}</th>`).join("")}</tr><tr><td>Equity</td>${rows.map(r=>`<td>${pct(r)}</td>`).join("")}</tr><tr><td>Fair share</td>${rows.map((_,i)=>`<td>${pct(1/(i+2))}</td>`).join("")}</tr></table><p class="note">Monte Carlo, ${it} trials per column, all-in to the river vs random hands (real ranges that stay in are stronger → your real equity is lower).</p>`;});
+};
+// ===== 4. Equity vs opponents table =====
+const SPOTS=[
+ ["Top set","KsKdQc7h2s","Kh9c4d"],
+ ["Nut flush draw (A-high, no pair)","AhJh8c6s2d","Kh9h4c"],
+ ["Big wrap (20 outs) no flush draw","JcTd8s7h2c","9h6d2s"],
+ ["Wrap + nut flush draw","AhTh8c7s2d","9h6h2c"],
+ ["Top two pair","KsQd8c5h2s","KhQc4d"],
+ ["Overpair AA (no draw)","AsAd8c5h2s","KhTc4d"],
+ ["Nut straight, no redraw","QcJd8s5h2c","KhTd4s"],
+];
+$("tblRun").onclick=()=>{
+  const it=+$("tblN").value;const cells=[];for(let s=0;s<SPOTS.length;s++)for(let n=1;n<=7;n++)cells.push([s,n]);const res={};
+  chunked(cells.length,1,i=>{const[s,n]=cells[i];res[s+"_"+n]=equity(parseCards(SPOTS[s][1]),parseCards(SPOTS[s][2]),n,it);},
+   p=>$("tblProg").textContent="Simulating… "+pct(p),
+   ()=>{$("tblProg").textContent=`${it} trials per cell, flop all-in vs N random 5-card hands.`;
+    let h=`<table><tr><th>Holding</th><th>Hand / Flop</th>${[1,2,3,4,5,6,7].map(n=>`<th>vs ${n}</th>`).join("")}</tr>`;
+    SPOTS.forEach((sp,s)=>{h+=`<tr><td>${sp[0]}</td><td>${fmtCards(parseCards(sp[1]))} | ${fmtCards(parseCards(sp[2]))}</td>`;for(let n=1;n<=7;n++){const e=res[s+"_"+n],fair=1/(n+1);h+=`<td class="${e>fair?'good':'bad'}">${pct(e)}</td>`;}h+="</tr>";});
+    $("tblOut").innerHTML=h+`</table><p class="note">Green = more than fair share (1/(N+1)), red = less.</p>`;});
+};
+// ===== Quiz =====
+const QUIZ=[
+ ["You hold A♥K♥ + three others; board is Q♥J♥T♥ 2♣ 9♥. Your hand?",["Royal flush","Nut flush only","Straight"],0,"A♥K♥ from hand + Q♥J♥T♥ from board = royal. You must use exactly 2 hole cards — you do here."],
+ ["How many 2-card combinations does a 5-card PLO hand contain?",["6","10","20"],1,"C(5,2)=10, versus C(4,2)=6 in PLO4 — 67% more starting combos per player."],
+ ["Board has four spades; you hold exactly one spade (the A♠). Do you have a flush?",["Yes, nut flush","No"],1,"Omaha needs two cards from your hand. One spade = no flush."],
+ ["You hold three Aces. How many Aces can you use?",["Three","Two"],1,"Only two hole cards play, so trips in hand play as a pair (and kill your own set outs)."],
+ ["With 13 outs on the flop, the Rule of 4 estimate to hit by river is about…",["26%","52%","39%"],1,"13×4 = 52%. The exact figure is a bit lower (~48% with 45 unseen) — the rule overestimates big draws."],
+ ["8-handed PLO5 multiway: why is a non-nut flush draw worse than in PLO4?",["Fewer flushes are possible","Opponents hold more suited combos, so a higher flush is more likely out there"],1,"With 10 combos each, many more hands contain suited pairs — check the 4 vs 5 card simulator."],
+];
+$("quiz").innerHTML=QUIZ.map((q,i)=>`<div class="q"><p><b>Q${i+1}.</b> ${q[0]}</p>${q[1].map((a,j)=>`<button onclick="ans(${i},${j},this)">${a}</button>`).join(" ")}<p class="exp" id="qe${i}"></p></div>`).join("");
+window.ans=(i,j,btn)=>{const q=QUIZ[i];$("qe"+i).innerHTML=(j===q[2]?"<span class='good'>✔ Correct.</span> ":"<span class='bad'>✘ Not quite.</span> ")+q[3];};
+// ===== PRACTICE GAME ENGINE (pure; UI hooks via G.ui) =====
+function pfScore(h){ // rough 0..1 PLO5 preflop playability
+  const rc=new Int8Array(13),sc=[[],[],[],[]];let s=0;
+  for(const c of h){rc[c>>2]++;sc[c&3].push(c>>2);}
+  for(let r=0;r<13;r++){if(rc[r]===2)s+=0.5+r*0.06;if(rc[r]>=3)s-=0.4;}
+  for(const su of sc)if(su.length>=2){const hi=Math.max(...su);s+=0.25+(hi===12?0.45:hi*0.02);if(su.length>=4)s-=0.3;}
+  const rs=[...new Set(h.map(c=>c>>2))].sort((a,b)=>a-b);
+  for(let i=1;i<rs.length;i++){const g=rs[i]-rs[i-1];if(g===1)s+=0.3;else if(g===2)s+=0.15;}
+  s+=rs.reduce((a,b)=>a+b,0)*0.012;
+  return Math.max(0,Math.min(1,s/3.2));
+}
+function quickOuts(h,b){if(b.length>=5)return 0;const used=new Set([...h,...b]);const cur=Math.max(catOf(evalOmaha(h,b)),3);let n=0;for(let c=0;c<52;c++)if(!used.has(c)&&catOf(evalOmaha(h,b.concat([c])))>cur)n++;return n;}
+const G={SB:1,BB:2,START:200,seats:[],button:0,board:[],deck:[],street:0,log:[],handNo:0,ui:null,user:0,
+ handOver:true,history:[],sitOutSetting:-1,speed:0,rs:(Date.now()>>>0),session:[],snap:null,
+ rngNext(){let t=(this.rs=(this.rs+0x6D2B79F5)>>>0);t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;}};
+const PROFILES=[
+ {name:"Willy",blurb:"Lawyer. Methodical, reads players; only plays when he has it, but aggressive and gambles once in.",tight:0.42,agg:0.75,bluff:0.08,chase:1.0,nutReq:2,think:1400},
+ {name:"Milty",blurb:"70, small-cap investor. Very safe: continues only with the nuts/2nd nuts. Strength = near-nuts.",tight:0.45,agg:0.35,bluff:0.0,chase:0.5,nutReq:4,think:1200},
+ {name:"David N",blurb:"Very aggressive big gambler. Bets the nuts hard and bluffs often.",tight:0.18,agg:0.85,bluff:0.35,chase:1.3,nutReq:0,think:600},
+ {name:"Rich",blurb:"Doctor. Conservative, but gambles when outs and pot odds justify it.",tight:0.38,agg:0.45,bluff:0.05,chase:1.0,nutReq:2,think:1200,math:true},
+ {name:"Todd",blurb:"Plays like Rich (pot-odds gambler) but tanks for a long time.",tight:0.38,agg:0.45,bluff:0.05,chase:1.0,nutReq:2,think:3200,math:true},
+ {name:"Rick",blurb:"Drinks, loves playing cards. Loose gambler who bluffs.",tight:0.12,agg:0.6,bluff:0.3,chase:1.4,nutReq:0,think:700},
+ {name:"Yum Yum",blurb:"Never bluffs. Chases draws a lot.",tight:0.22,agg:0.4,bluff:0.0,chase:1.8,nutReq:1,think:900},
+ {name:"L",blurb:"Like Yum Yum: (almost) never bluffs, but chases less often.",tight:0.28,agg:0.4,bluff:0.02,chase:1.2,nutReq:1,think:900},
+];
+const STREETS=["Preflop","Flop","Turn","River"];
+function gInit(){G.seats=[];for(let i=0;i<8;i++)G.seats.push({name:i===0?"Mouk":"",prof:null,stack:G.START,hand:[],folded:false,allin:false,bet:0,total:0,isUser:i===0,net:0});G.button=Math.floor(Math.random()*8);}
+function potTotal(){return G.seats.reduce((a,s)=>a+s.total,0);}
+function liveSeats(){return G.seats.filter(s=>!s.folded);}
+function canAct(s){return !s.folded&&!s.allin;}
+function nextIdx(i){return (i+1)%8;}
+function L(m){G.log.push(m);if(G.frames)G.frames.push({msg:m,street:G.street,board:(G.board||[]).slice(),button:G.button,pot:potTotal(),seats:G.seats.map(s=>({name:s.name,stack:s.stack,bet:s.bet,total:s.total,folded:s.folded,allin:s.allin,hand:s.hand.slice(),isUser:s.isUser}))});}
+function putIn(s,amt){amt=Math.min(amt,s.stack);s.stack-=amt;s.bet+=amt;s.total+=amt;if(s.stack===0)s.allin=true;return amt;}
+function gNewHand(){
+  for(const s of G.seats){s.stack=G.START;Object.assign(s,{hand:[],folded:false,allin:false,bet:0,total:0});}
+  G.frames=[];G.handNo++;G.sitOut=G.sitOutSetting>=0?G.sitOutSetting:(G.handNo-1)%8;{let k=0;for(let i=1;i<8;i++){if(k===G.sitOut)k++;G.seats[i].prof=PROFILES[k];G.seats[i].name=PROFILES[k].name;k++;}}L(`${PROFILES[G.sitOut].name} sits out this hand.`);G.button=nextIdx(G.button);G.board=[];G.street=0;G.history=[];G.handOver=false;G.aggressor=-1;G.result="";
+  G.seed=(G.rngNext()*4294967296)>>>0;G.deck=[...Array(52).keys()];for(let a=51;a>0;a--){const b=Math.floor(G.rngNext()*(a+1));[G.deck[a],G.deck[b]]=[G.deck[b],G.deck[a]];}let k=0;
+  for(const s of G.seats)s.hand=G.deck.slice(k,k+=5);G.deckPos=k;
+  const sb=nextIdx(G.button),bb=nextIdx(sb);
+  L(`— Hand #${G.handNo} — Button: ${G.seats[G.button].name}`);
+  putIn(G.seats[sb],G.SB);putIn(G.seats[bb],G.BB);L(`${G.seats[sb].name} posts SB ${G.SB}, ${G.seats[bb].name} posts BB ${G.BB}.`);
+  G.curBet=G.BB;G.minRaise=G.BB;G.toAct=nextIdx(bb);G.need=new Set(G.seats.map((s,i)=>i).filter(i=>canAct(G.seats[i])));
+  G.ui&&G.ui.street();gAdvance();
+}
+function legal(i){const s=G.seats[i];const toCall=Math.min(G.curBet-s.bet,s.stack);const pot=potTotal();
+  const maxTo=Math.min(s.bet+s.stack,G.curBet+pot+(G.curBet-s.bet)); // pot-limit: call then raise size of pot
+  const minTo=Math.min(G.curBet+G.minRaise,s.bet+s.stack);
+  const canRaise=s.stack>toCall&&maxTo>G.curBet&&G.seats.some((o,j)=>j!==i&&canAct(o)||(j!==i&&!o.folded&&o.bet>s.bet&&false));
+  return {toCall,minTo,maxTo,canRaise:canRaise&&G.seats.filter((o,j)=>j!==i&&canAct(o)).length>0,pot};}
+function gAct(i,type,to){ // type: fold|check|call|raise (bet = raise when curBet==bet)
+  const s=G.seats[i],lg=legal(i);
+  if(type==="check"&&lg.toCall>0)type="call";
+  if(type==="raise"&&!lg.canRaise)type=lg.toCall>0?"call":"check";
+  if(type==="fold"&&lg.toCall===0)type="check";
+  if(type==="fold"){s.folded=true;L(`${s.name} folds.`);}
+  else if(type==="check"){L(`${s.name} checks.`);}
+  else if(type==="call"){const a=putIn(s,lg.toCall);L(`${s.name} calls ${a}${s.allin?" (all-in)":""}.`);}
+  else{to=Math.round(Math.max(lg.minTo,Math.min(lg.maxTo,to)));const prev=G.curBet;putIn(s,to-s.bet);
+    if(s.bet>G.curBet){if(s.bet-prev>=G.minRaise)G.minRaise=s.bet-prev;G.curBet=s.bet;G.need=new Set(G.seats.map((x,j)=>j).filter(j=>j!==i&&canAct(G.seats[j])));G.aggressor=i;}
+    L(`${s.name} ${prev===0?"bets":"raises to"} ${s.bet}${s.allin?" (all-in)":""}.`);}
+  G.need.delete(i);G.toAct=nextIdx(i);
+}
+function roundDone(){if(liveSeats().length<=1)return true;for(const i of G.need){const s=G.seats[i];if(canAct(s))return false;}return G.seats.every(s=>!canAct(s)||s.bet===G.curBet);}
+function gAdvance(){ // run bots until user's turn or hand end
+  for(let guard=0;guard<500;guard++){
+    if(roundDone()){
+      if(liveSeats().length<=1||G.street===3){return gShowdown();}
+      for(const s of G.seats)s.bet=0;G.curBet=0;G.minRaise=G.BB;G.street++;
+      const n=G.street===1?3:1;G.board=G.board.concat(G.deck.slice(G.deckPos,G.deckPos+n));G.deckPos+=n;
+      L(`*** ${STREETS[G.street]}: ${G.board.map(cardStr).join(" ")} (pot ${potTotal()})`);
+      G.need=new Set(G.seats.map((s,i)=>i).filter(i=>canAct(G.seats[i])));
+      if(G.need.size<=1){G.need.clear();} // everyone all-in: run it out
+      G.toAct=nextIdx(G.button);G.ui&&G.ui.street();continue;}
+    let i=G.toAct;let c=0;while(!(canAct(G.seats[i])&&(G.need.has(i)||G.seats[i].bet<G.curBet))&&c<9){i=nextIdx(i);c++;}
+    if(c>=9){G.need.clear();continue;}
+    G.toAct=i;
+    if(G.seats[i].isUser){G.ui?G.ui.prompt(legal(i)):0;return "user";}
+    if(G.speed>0&&G.ui){G.thinking=i;G.ui.think(i);const tk=G.seats[i].prof.think*G.speed;setTimeout(()=>{G.thinking=-1;const [t,to]=botDecide(i);gAct(i,t,to);gAdvance();},tk);return "wait";}
+    const [t,to]=botDecide(i);gAct(i,t,to);
+  }
+  throw new Error("advance guard");
+}
+function botDecide(i){
+  const s=G.seats[i],p=s.prof,lg=legal(i),pot=lg.pot,R=G.rngNext();
+  const sz=f=>s.bet+lg.toCall+Math.round((pot+lg.toCall)*f);
+  const odds=lg.toCall>0?lg.toCall/(pot+lg.toCall):0;
+  if(G.street===0){const sc=pfScore(s.hand);const play=sc>=p.tight||R<p.bluff*0.5;
+    if(!play)return lg.toCall===0?["check"]:["fold"];
+    if(lg.canRaise&&G.rngNext()<p.agg*(0.3+sc))return ["raise",sz(G.curBet>G.BB?1:0.6+0.4*G.rngNext())];
+    if(lg.toCall>G.BB*8&&sc<p.tight+0.15&&G.rngNext()>p.chase*0.5)return ["fold"];
+    return lg.toCall===0?["check"]:["call"];}
+  const cat=catOf(evalOmaha(s.hand,G.board));const outs=quickOuts(s.hand,G.board);const left=5-G.board.length;
+  const made=[0.12,0.3,0.5,0.62,0.78,0.85,0.95,0.99,1][cat];const drawEq=Math.min(0.7,outs*0.021*left);
+  const nutsOK=cat>=p.nutReq;
+  if(lg.toCall===0){
+    if(lg.canRaise&&nutsOK&&made>0.6&&G.rngNext()<p.agg+0.3)return ["raise",sz(0.6+0.4*p.agg)];
+    if(lg.canRaise&&G.rngNext()<p.bluff+(G.aggressor===i?p.agg*0.4:0)&&p.bluff>0)return ["raise",sz(0.5+0.5*G.rngNext())];
+    if(lg.canRaise&&drawEq>0.4&&G.rngNext()<p.agg*p.chase*0.5)return ["raise",sz(0.75)];
+    return ["check"];}
+  if(lg.canRaise&&nutsOK&&made>=0.78&&R<p.agg)return ["raise",sz(1)];
+  if(lg.canRaise&&R<p.bluff*0.3)return ["raise",sz(0.8)];
+  if(p.nutReq>=4&&!nutsOK&&drawEq<0.45)return ["fold"];
+  const eqGuess=Math.max(nutsOK?made*0.8:made*0.5,drawEq*p.chase*(p.math?1:1.0));
+  if(eqGuess>odds||(left>0&&outs>=8&&G.rngNext()<p.chase*0.25))return ["call"];
+  return ["fold"];
+}
+function gShowdown(){
+  while(G.board.length<5&&liveSeats().length>1){G.board.push(G.deck[G.deckPos++]);}
+  const live=liveSeats();const won=new Array(8).fill(0);
+  if(live.length===1){const w=G.seats.indexOf(live[0]);won[w]=potTotal();L(`${live[0].name} wins ${won[w]} uncontested.`);}
+  else{L(`*** Showdown: board ${G.board.map(cardStr).join(" ")}`);
+    const vals=G.seats.map(s=>s.folded?-1:evalOmaha(s.hand,G.board));
+    for(const s of live)L(`${s.name}: ${s.hand.map(cardStr).join(" ")} — ${CATS[catOf(vals[G.seats.indexOf(s)])]}`);
+    const levels=[...new Set(G.seats.map(s=>s.total).filter(x=>x>0))].sort((a,b)=>a-b);let prev=0;
+    for(const lv of levels){let part=0;for(const s of G.seats)part+=Math.max(0,Math.min(s.total,lv)-prev);
+      const elig=G.seats.map((s,j)=>j).filter(j=>!G.seats[j].folded&&G.seats[j].total>=lv);
+      if(elig.length===0){ // dead money: give to best live hand
+        const b=Math.max(...vals);const ws=vals.map((v,j)=>j).filter(j=>vals[j]===b);ws.forEach((j,k)=>won[j]+=Math.floor(part/ws.length)+(k===0?part%ws.length:0));}
+      else{const b=Math.max(...elig.map(j=>vals[j]));const ws=elig.filter(j=>vals[j]===b);ws.forEach((j,k)=>won[j]+=Math.floor(part/ws.length)+(k===0?part%ws.length:0));}
+      prev=lv;}
+    won.forEach((w,j)=>{if(w)L(`${G.seats[j].name} wins ${w}.`);});}
+  const u=G.seats[0];G.result=`Mouk ${won[0]-u.total>=0?"won":"lost"} ${Math.abs(won[0]-u.total)} chips this hand.`;
+  G.seats.forEach((s,j)=>{s.stack+=won[j];s.net+=won[j]-s.total;});
+  G.handOver=true;G.lastWon=won;(G.hands=G.hands||[]).push({no:G.handNo,frames:G.frames.slice(),result:G.result});G.ui&&G.ui.end();return "end";
+}
+// hero equity vs active opponents (random or loose-weighted range)
+function heroEquity(iters,weighted,me){me=me||0;
+  const hero=G.seats[me].hand,board=G.board;const opp=G.seats.filter((s,i)=>i!==me&&!s.folded).length;
+  if(opp===0)return {win:1,tie:0,opp:0};
+  const used=new Set([...hero,...board]);const base=[];for(let c=0;c<52;c++)if(!used.has(c))base.push(c);
+  let w=0,t=0;const need=5-board.length;
+  for(let it=0;it<iters;it++){const d=base.slice();shuffleDraw(d,need);let p=need;const B=board.concat(d.slice(0,need));
+    const hv=evalOmaha(hero,B);let best=-1,cntB=0;
+    for(let o=0;o<opp;o++){let h;for(let tries=0;tries<12;tries++){const rest=d.length-p;for(let k=0;k<5;k++){const j=p+k+Math.floor(Math.random()*(rest-k));const x=d[p+k];d[p+k]=d[j];d[j]=x;}h=d.slice(p,p+5);if(!weighted||pfScore(h)>0.28||tries===11)break;}
+      p+=5;const v=evalOmaha(h,B);if(v>best){best=v;cntB=1;}else if(v===best)cntB++;}
+    if(hv>best)w++;else if(hv===best)t++;}
+  return {win:w/iters,tie:t/iters,opp};
+}
+
+// ===== snapshots for replay =====
+function gSnapshot(){const o={};for(const k of ["seats","frames","button","board","deck","deckPos","street","log","handNo","handOver","history","curBet","minRaise","toAct","aggressor","rs","result"])o[k]=JSON.parse(JSON.stringify(G[k]===undefined?null:G[k]));o.need=[...G.need];return o;}
+function gRestore(o){for(const k in o)G[k]=JSON.parse(JSON.stringify(o[k]));G.need=new Set(o.need);}
+// ===== heuristic "solver-style" hint (NOT real solver output) =====
+function handType(i){const s=G.seats[i];if(G.street===0)return pfScore(s.hand)>0.45?"Strong preflop":"Weak/marginal preflop";
+  const cat=catOf(evalOmaha(s.hand,G.board));if(cat>=2)return "Made hand";if(quickOuts(s.hand,G.board)>=6)return "Draw";return "Air / bluff";}
+function gHint(i,iters){
+  const lg=legal(i),s=G.seats[i];const eq0=heroEquity(iters||400,true,i);const eq=eq0.win+eq0.tie/2;const opp=eq0.opp;const fair=1/(opp+1);
+  const need=lg.toCall>0?lg.toCall/(lg.pot+lg.toCall):0;const ip=(()=>{let j=nextIdx(i),last=i;for(let c=0;c<7;c++,j=nextIdx(j))if(canAct(G.seats[j]))last=j;return G.street>0&&last===i;})();
+  let nut=0;if(G.street>0&&G.board.length<5){nut=quickOuts(s.hand,G.board);}
+  let act,why;let note="";let eqA=eq;
+  if(G.aggressor>0&&!G.seats[G.aggressor].folded&&lg.toCall>0){const ap=G.seats[G.aggressor].prof;
+    if(ap.nutReq>=4){eqA=eq*0.6;note=` ${ap.name} only bets near-nuts — discounted your equity.`;}
+    else if(ap.bluff>=0.25){eqA=Math.min(1,eq*1.15);note=` ${ap.name} bluffs a lot — calling a bit lighter is OK.`;}
+    else if(ap.bluff<=0.02){eqA=eq*0.85;note=` ${ap.name} rarely bluffs — respect the bet.`;}}
+  if(lg.toCall===0){
+    if(lg.canRaise&&eq>fair*1.6){act="raise";why=`Bet: ${(eq*100).toFixed(0)}% equity vs ${opp} opp is well above fair share ${(fair*100).toFixed(0)}% — build the pot.`;}
+    else if(lg.canRaise&&nut>=13&&opp<=2){act="raise";why=`Semi-bluff: ${nut} strong outs and few opponents give fold equity plus a big draw.`;}
+    else{act="check";why=`Check: ${(eq*100).toFixed(0)}% equity vs fair share ${(fair*100).toFixed(0)}%${ip?"":" out of position"} — no value in betting into ${opp} players.`;}
+  }else{
+    if(lg.canRaise&&eqA>Math.max(fair*1.8,need+0.2)){act="raise";why=`Raise: ${(eq*100).toFixed(0)}% equity crushes the ${(need*100).toFixed(0)}% price and fair share — charge the field.`;}
+    else if(eqA+(ip?0.03:0)>=need){act="call";why=`Call: need ${(need*100).toFixed(0)}% (pot odds), have ~${(eq*100).toFixed(0)}%${ip?" with position":""}.`;}
+    else{act="fold";why=`Fold: need ${(need*100).toFixed(0)}% to call but only ~${(eq*100).toFixed(0)}% vs ${opp} loose opponent(s)${nut?` (${nut} outs aren't enough)`:""}.`;}
+  }
+  why+=note;
+  return {act,why,eq,need,fair,opp,pot:lg.pot,toCall:lg.toCall,type:handType(i)};
+}
+function norm(t,lg){if(t==="check"&&lg.toCall>0)return"call";if(t==="fold"&&lg.toCall===0)return"check";return t;}
+function evLoss(h,act){ // rough estimate in chips
+  const callEV=h.eq*(h.pot+h.toCall)-h.toCall;
+  if(act===h.act)return 0;
+  if(h.act==="fold")return Math.max(0,-callEV);           // called/raised a losing price
+  if(act==="fold")return Math.max(0,callEV);              // folded a profitable spot
+  return Math.abs(h.eq-h.fair)*h.pot*0.5;                 // sizing/aggression mismatch (approx)
+}
+function gUserAct(type,to,hint){ // records decision against hint, then acts
+  const lg=legal(0);const t=norm(type,lg);const ok=!hint||t===hint.act||(hint.act==="call"&&t==="check");
+  const rec={hand:G.handNo,street:STREETS[G.street],type:hint?hint.type:"?",action:t+(t==="raise"?" "+Math.round(to):""),hint:hint?hint.act:"?",why:hint?hint.why:"",ok,loss:hint&&!ok?evLoss(hint,t):0,eq:hint?hint.eq:null};
+  if(!ok&&G.snap)rec.snap=G.snap;G.session.push(rec);gAct(0,t,to);return rec;
+}
+function gLeaks(){const by={street:{},type:{}};let n=0,m=0,loss=0;
+  for(const r of G.session){n++;for(const [k,v] of [["street",r.street],["type",r.type]]){const o=by[k][v]=by[k][v]||{n:0,m:0,loss:0};o.n++;if(!r.ok){o.m++;o.loss+=r.loss;}}if(!r.ok){m++;loss+=r.loss;}}
+  return {by,n,m,loss};}
+// ===== PRACTICE UI: rendered 8-handed table =====
+let curHint=null,lastLg=null,RV=null; // RV = replay viewer {h,k}
+const SEATPOS=[[50,98],[14,88],[1,52],[14,13],[50,2],[86,13],[99,52],[86,88]]; // % left/top of seat centers (0=Mouk bottom)
+const BETPOS=[[50,72],[27,70],[18,52],[27,32],[50,27],[73,32],[82,52],[73,70]];
+function pcard(c,up,small){if(!up)return `<span class="pc back${small?' sm':''}"></span>`;const s=SUITS[c&3];return `<span class="pc ${s==='h'||s==='d'?'red':''}${small?' sm':''}"><b>${RANKS[c>>2]==='T'?'10':RANKS[c>>2]}</b><i>${SUITSYM[s]}</i></span>`;}
+function chips(n){if(!n)return"";const k=Math.min(5,Math.ceil(Math.log2(n+1)/1.6));return `<span class="chips">${'<span class="chip"></span>'.repeat(k)}</span><span class="betamt">${n}</span>`;}
+function tableHTML(st){ // st: {seats,board,button,pot,toAct,thinking,over,revealAll,street}
+  const sb=(st.button+1)%8,bb=(st.button+2)%8;let h=`<div class="felt"><div class="rail"></div><div class="center"><div class="potlbl">Pot <b>${st.pot}</b></div><div class="board">${[0,1,2,3,4].map(k=>st.board[k]!==undefined?pcard(st.board[k],true):'<span class="pc slot"></span>').join("")}</div><div class="street">${st.label||""}</div></div>`;
+  st.seats.forEach((s,i)=>{const [x,y]=SEATPOS[i],[bx,by]=BETPOS[i];const up=s.isUser||st.revealAll;
+    const prof=G.seats[i]&&G.seats[i].prof&&!s.isUser?G.seats[i].prof:null;
+    h+=`<div class="seatT ${s.folded?'fold':''} ${st.toAct===i?'act':''} ${st.thinking===i?'thinking':''} ${s.isUser?'me':''}" style="left:${x}%;top:${y}%">
+      <div class="hcards">${s.folded&&!st.revealAll?'':s.hand.map(c=>pcard(c,up,!s.isUser)).join("")}</div>
+      <div class="tag" ${prof?`title="${prof.blurb}"`:''}><b>${s.name}</b>${s.allin?' <em>ALL-IN</em>':''}<div class="stack">${s.stack}</div>${prof?`<div class="blurb">${prof.blurb}</div>`:''}${st.thinking===i?'<div class="dots">thinking<span>.</span><span>.</span><span>.</span></div>':''}</div></div>`;
+    if(s.bet)h+=`<div class="bet" style="left:${bx}%;top:${by}%">${chips(s.bet)}</div>`;
+    if(i===st.button)h+=`<div class="marker dealer" style="left:${(x+bx)/2+4}%;top:${(y+by)/2}%">D</div>`;
+    else if(i===sb||i===bb)h+=`<div class="marker blind" style="left:${(x+bx)/2+4}%;top:${(y+by)/2}%">${i===sb?'SB':'BB'}</div>`;});
+  return h+`</div>`;}
+function liveState(){const show=G.handOver&&liveSeats().length>1;return {seats:G.seats,board:G.board,button:G.button,pot:potTotal(),toAct:G.handOver?-1:G.toAct,thinking:G.thinking,revealAll:show,label:G.handOver?G.result:STREETS[G.street]};}
+function renderTable(){if(RV||!G.seats.length)return;$("gTable").innerHTML=tableHTML(liveState());
+  $("gInfo").innerHTML=`Hand #${G.handNo} · ${G.sitOut!==undefined?PROFILES[G.sitOut].name+" sits out":""} · Session net: <b class="${G.seats[0].net>=0?'good':'bad'}">${G.seats[0].net>=0?"+":""}${G.seats[0].net}</b>`;
+  $("gLog").textContent=G.log.slice(-40).join("\n");$("gLog").scrollTop=1e9;}
+function dash(){if(!G.seats.length)return;const w=$("gWeighted").checked;const e=heroEquity(+$("gIters").value,w);
+  const outs=G.board.length>=3&&G.board.length<5?outsInfo(G.seats[0].hand,G.board,0):null;
+  const cat=G.board.length>=3?CATS[catOf(evalOmaha(G.seats[0].hand,G.board))]:"—";
+  G.history.push({st:STREETS[G.street],eq:e.win+e.tie/2,win:e.win,tie:e.tie,opp:e.opp,outs:outs?outs.outs.length:null});
+  $("dash").innerHTML=`<h3>Mouk's odds · ${STREETS[G.street]}</h3><div class="big">${pct(e.win+e.tie/2)}</div><div class="eqbar"><span style="width:${100*e.win}%" class="w"></span><span style="width:${100*e.tie}%" class="t"></span></div><div>Win <b>${pct(e.win)}</b> · Tie <b>${pct(e.tie)}</b></div><div>vs <b>${e.opp}</b> active · fair share ${pct(1/(e.opp+1))}</div><div>Made: <b>${cat}</b></div>`+
+   (outs?`<div>Outs: <b>${outs.outs.length}</b> · ${pct(outs.turn)} next card${outs.river!==null?" · "+pct(outs.river)+" by river":""}</div>`:"")+
+   `<h4>This hand</h4><table><tr><th>Street</th><th>Opp</th><th>Win</th><th>Tie</th><th>Eq</th><th>Δ</th></tr>${G.history.map((h,k)=>`<tr><td>${h.st}</td><td>${h.opp}</td><td>${pct(h.win)}</td><td>${pct(h.tie)}</td><td>${pct(h.eq)}</td><td class="${k&&h.eq>=G.history[k-1].eq?'good':'bad'}">${k?((h.eq-G.history[k-1].eq)*100).toFixed(1):"—"}</td></tr>`).join("")}</table><p class="note">Monte Carlo vs random hands of players still in${w?" (weighted to a loose range)":""}.</p>`;}
+function setAmt(v){const a=$("gAmt");if(!a)return;a.value=Math.max(+a.min,Math.min(+a.max,Math.round(v)));$("gAmtL").textContent=a.value;}
+G.ui={think(i){renderTable();},street(){renderTable();setTimeout(dash,0);},
+ prompt(lg){lastLg=lg;G.snap=gSnapshot();renderTable();
+  const half=G.curBet+Math.round((lg.pot+lg.toCall)/2)+0; const isBet=G.curBet===0||(G.street===0&&false);
+  $("gCtl").innerHTML=`<div class="abar"><span class="tocall">To call <b>${lg.toCall}</b> · Pot <b>${lg.pot}</b></span>`+
+   (lg.toCall>0?`<button class="fold" onclick="uAct('fold')">Fold</button><button onclick="uAct('call')">Call ${lg.toCall}</button>`:`<button onclick="uAct('check')">Check</button>`)+
+   (lg.canRaise?`<span class="sizer"><button class="q" onclick="setAmt(${lg.minTo})">Min</button><button class="q" onclick="setAmt(${Math.min(lg.maxTo,Math.max(lg.minTo,G.curBet+lg.toCall+Math.round((lg.pot+lg.toCall)/2)))})">½ Pot</button><button class="q" onclick="setAmt(${lg.maxTo})">Pot</button>
+     <input type="range" id="gAmt" min="${lg.minTo}" max="${lg.maxTo}" value="${lg.minTo}" oninput="gAmtL.textContent=this.value"><span id="gAmtL">${lg.minTo}</span>
+     <button class="raise" onclick="uAct('raise')">${G.curBet===0?"Bet":"Raise to"}</button></span>`:"")+`</div>`;},
+ end(){renderTable();$("gCtl").innerHTML=`<div class="abar"><b>${G.result}</b><button onclick="gNewHand()">Deal next hand</button><button onclick="openReplay(G.hands.length-1)">▶ Replay this hand</button></div>`;renderSession();renderHandList();}};
+window.uAct=t=>{const h=gHint(0,500);const to=$("gAmt")?+$("gAmt").value:0;const r=gUserAct(t,to,h);
+  $("gHint").innerHTML=`<div class="hintbox ${r.ok?'ok':'bad'}">${r.ok?"✔ Matches hint":"✘ Deviates from hint"} — you: <b>${r.action}</b> · heuristic "solver-style" hint (not real solver output): <b>${h.act.toUpperCase()}</b> — ${h.why}`+
+   (!r.ok?` <span class="note">(est. loss ≈ ${r.loss.toFixed(1)} chips)</span> <button onclick="retry(${G.session.length-1})">↺ Retry this decision</button>`:"")+`</div>`;
+  $("gCtl").innerHTML="";renderSession();setTimeout(()=>{gAdvance();renderTable();},30);};
+window.retry=k=>{if(G.thinking>=0&&!G.handOver)return;closeReplay();const r=G.session[k];if(!r.snap)return;gRestore(r.snap);
+  $("gHint").innerHTML=`<div class="hintbox"><i>Retrying hand #${r.hand} ${r.street} — same deck, hands and opponent actions. Last time you chose ${r.action}.</i></div>`;G.history=[];renderTable();setTimeout(dash,0);G.ui.prompt(legal(0));};
+// ---- street-by-street replay of completed hands ----
+function renderHandList(){$("gHands").innerHTML=(G.hands||[]).map((h,k)=>`<option value="${k}">Hand #${h.no} — ${h.result}</option>`).reverse().join("");}
+window.openReplay=k=>{if(!G.hands||!G.hands[k])return;RV={h:G.hands[k],k:0};$("gReplay").style.display="flex";showFrame();};
+window.closeReplay=()=>{RV=null;$("gReplay").style.display="none";renderTable();};
+window.stepReplay=d=>{if(!RV)return;const f=RV.h.frames;if(d==="next")RV.k=Math.min(f.length-1,RV.k+1);else if(d==="prev")RV.k=Math.max(0,RV.k-1);
+  else if(d==="nst"||d==="pst"){const cur=f[RV.k].street;let k=RV.k;if(d==="nst"){while(k<f.length-1&&f[k].street===cur)k++;}else{while(k>0&&f[k].street>=cur)k--;while(k>0&&f[k-1].street===f[k].street)k--;}RV.k=k;}showFrame();};
+function showFrame(){const fr=RV.h.frames[RV.k];$("gTable").innerHTML=tableHTML({seats:fr.seats,board:fr.board,button:fr.button,pot:fr.pot,toAct:-1,thinking:-1,revealAll:true,label:`REPLAY #${RV.h.no} · ${STREETS[Math.min(3,fr.street)]}`});
+  $("gRvMsg").textContent=`${RV.k+1}/${RV.h.frames.length}: ${fr.msg}`;}
+function renderSession(){const lk=gLeaks();const tb=(o,t)=>`<h4>${t}</h4><table><tr><th></th><th>Decisions</th><th>Mistakes</th><th>Est. chips lost</th></tr>${Object.entries(o).sort((a,b)=>b[1].loss-a[1].loss).map(([k,v])=>`<tr><td>${k}</td><td>${v.n}</td><td>${v.m}</td><td>${v.loss.toFixed(0)}</td></tr>`).join("")}</table>`;
+  $("sess").innerHTML=`<p>${lk.n} decisions · ${lk.m} deviated from hint · est. ${lk.loss.toFixed(0)} chips lost (rough pot-odds estimate)</p><div class="two">${tb(lk.by.street,"Leaks by street")+tb(lk.by.type,"Leaks by hand type")}</div>`+
+  `<h4>All decisions</h4><table><tr><th>Hand</th><th>Street</th><th>Type</th><th>Mouk</th><th>Hint</th><th>Eq</th><th>Loss</th><th></th></tr>${G.session.map((r,k)=>`<tr><td>${r.hand}</td><td>${r.street}</td><td>${r.type}</td><td class="${r.ok?'good':'bad'}">${r.action}</td><td>${r.hint}</td><td>${r.eq!=null?pct(r.eq):""}</td><td>${r.loss?r.loss.toFixed(1):""}</td><td>${r.snap?`<button onclick="retry(${k})">Retry</button>`:""}</td></tr>`).reverse().join("")}</table>`;}
+$("gSitOut").innerHTML='<option value="-1">Rotate each hand</option>'+PROFILES.map((p,k)=>`<option value="${k}">${p.name}</option>`).join("");
+$("gSitOut").onchange=e=>G.sitOutSetting=+e.target.value;$("gSpeed").onchange=e=>G.speed=+e.target.value;G.speed=+($("gSpeed").value||0);
+$("gStart").onclick=()=>{if(G.thinking>=0&&!G.handOver)return;closeReplay();if(!G.seats.length)gInit();$("gHint").innerHTML="";gNewHand();};
+$("gTable").innerHTML=tableHTML({seats:PROFILES.slice(0,8).map((p,i)=>({name:i?p.name:"Mouk",stack:200,bet:0,hand:[],isUser:!i})),board:[],button:0,pot:0,toAct:-1,label:"Press Deal to start"});
+if(typeof location!=="undefined"&&location.hash==="#demo"){document.body.classList.add("demo");G.speed=0;gInit();gNewHand();}
+</script></body></html>
