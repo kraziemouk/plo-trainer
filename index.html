@@ -44,54 +44,78 @@ input,select{background:var(--bg);color:var(--fg);border:1px solid #8886;border-
 .gwrap{display:flex;gap:14px;flex-wrap:wrap}.gmain{flex:1 1 600px;min-width:0}.dash{flex:1 1 240px;max-width:320px}
 @media (max-width:900px){.dash{max-width:none}.seatT{width:120px}.pc{width:34px;height:50px}.pc b{font-size:15px}.pc i{font-size:16px}}
 body.demo main>section:not(#practice),body.demo main>header,body.demo main>p{display:none}
-</style></head><body><main>
-<header><h1>♠ PLO5 Odds Trainer <small style="font-size:14px;color:var(--mut)">8-handed · five-card Pot-Limit Omaha</small></h1><button id="theme">Dark / Light</button></header>
-<section class="lesson"><h2>Lesson 1 — The one rule that runs everything</h2>
+
+html,body.app{height:100%;margin:0;overflow:hidden}
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+#topbar{display:flex;align-items:center;gap:8px;padding:4px 8px;font-size:13px;background:var(--card);flex:0 0 auto;flex-wrap:wrap}#topbar .ttl{font-size:14px}#topbar .tb{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap}
+button.sm{padding:4px 9px;font-size:12px;background:#555;margin:0}button.sm.deal{background:var(--acc)}
+#stage{flex:1 1 auto;min-height:0;container-type:size;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0 4px}
+.tablewrap{position:relative;margin:0;min-height:0;aspect-ratio:2/3;width:min(100cqw,calc(100cqh*0.6667))}
+.felt{inset:9% 15%;border-radius:50%}
+@media (orientation:landscape){.tablewrap{aspect-ratio:16/10;width:min(100cqw,calc(100cqh*1.6))}.felt{inset:10% 9%}}
+#bottom{flex:0 0 auto;padding:4px 6px calc(4px + env(safe-area-inset-bottom));background:var(--card)}
+.abar{margin:0;padding:4px;gap:6px}.abar button{min-height:44px;font-size:15px;flex:1 1 auto;margin:0}.abar .tocall{flex:1 0 100%;font-size:12px;color:var(--mut)}
+.abar .sizer{flex:1 1 100%;display:flex;gap:6px;align-items:center}.abar .sizer .q{flex:0 0 auto;min-height:36px;font-size:12px;padding:4px 8px}#gAmt{flex:1 1 80px;width:auto;height:30px}#gAmtL{min-width:34px;text-align:right;font-weight:700}
+#hud{position:fixed;right:6px;bottom:var(--bottomH,120px);z-index:20;max-width:min(330px,calc(100vw - 12px));font-size:12px}
+#hudTog{display:block;margin-left:auto;font-size:12px;padding:5px 10px;background:#000c;border:1px solid #fff3;border-radius:14px}
+#hudBody{display:none;background:var(--card);border:1px solid #8885;border-radius:10px;padding:6px 8px;margin-top:4px;max-height:52vh;overflow:auto;box-shadow:0 4px 16px #0009}#hud.open #hudBody{display:block}
+#hud .dash{max-width:none;padding:0;background:none;font-size:12px}#hud .big{font-size:24px}#hud h3{margin:2px 0;font-size:13px}#hud h4{margin:6px 0 2px;font-size:12px}#hud table{font-size:11px}#hud td,#hud th{padding:1px 4px}
+.hintbox{font-size:12px;margin:0 0 6px;padding:6px}
+.sheet{position:fixed;top:0;left:0;height:100%;width:min(560px,92vw);background:var(--card);z-index:30;overflow:auto;padding:8px 12px;transform:translateX(-105%);transition:transform .2s;box-shadow:4px 0 20px #000a}.sheet.open{transform:none}
+.sheet.small{font-size:13px}.sheet.small h2{font-size:15px}.sheet.small section{padding:8px 10px;margin:6px 0;box-shadow:none}.sheet details>summary{font-size:12px;color:var(--mut);padding:5px 0;border-bottom:1px solid #8883}
+.sheethead{display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--card);padding:4px 0;z-index:1}
+.sheet table{font-size:11px}.sheet button{font-size:12px;padding:5px 9px}
+.seatT{width:min(140px,22cqw)}.seatT .tag{font-size:12px;padding:2px 4px}.seatT.me{width:min(250px,60cqw)}
+.pc{width:min(42px,8.5cqw);height:min(60px,12cqw)}.pc b{font-size:min(19px,4cqw)}.pc i{font-size:min(20px,4.2cqw)}
+.pc.sm{width:min(22px,4.6cqw);height:min(32px,6.6cqw)}.pc.sm b,.pc.sm i{font-size:min(11px,2.6cqw)}
+.hcards{min-height:0}.center .potlbl{font-size:13px}.street{font-size:11px}
+@media (max-width:767px),(max-height:500px){#topbar .ttl{display:none}#gInfo{font-size:11px}.seatT .tag{font-size:10px}.betamt{font-size:10px}.marker{width:18px;height:18px;line-height:18px;font-size:9px}}
+@media (orientation:landscape) and (max-height:500px){.abar .tocall{flex:0 0 auto}.abar .sizer{flex:2 1 300px}.abar button{min-height:40px}}
+
+@media (orientation:landscape) and (max-height:500px){
+ .tablewrap{aspect-ratio:auto;width:100cqw;height:100cqh}.felt{inset:16% 13%}
+ .seatT{width:auto}.seatT .tag{padding:1px 5px;white-space:nowrap}.seatT .tag b{margin-right:4px}.seatT .stack{display:inline}
+ .pc.sm{width:3cqh;height:4.5cqh;width:min(16px,4cqh);height:min(22px,6cqh)}.pc.sm b,.pc.sm i{font-size:8px}
+ .seatT.me{display:flex;align-items:center;gap:6px;width:auto}.seatT.me .hcards{order:2}.seatT.me .pc{width:30px;height:42px}.seatT.me .pc b{font-size:14px}.seatT.me .pc i{font-size:14px}
+ .center .pc{width:30px;height:42px}.center .pc b,.center .pc i{font-size:14px}.potlbl{margin-bottom:2px}.street{display:none}
+}
+.abar{max-width:980px;margin:0 auto}
+@media (min-width:1100px) and (min-height:600px){#stage{padding-right:340px}#hud{width:320px}}
+.meters{display:inline-flex;gap:3px;margin-left:4px;vertical-align:middle}
+.mt{position:relative;width:28px;height:28px;min-width:28px;padding:0;margin:0;border-radius:6px;background:#ffffff14;border:1px solid #fff3;font-size:15px;line-height:26px;color:#fff}
+.mt i{position:absolute;top:-6px;right:-6px;min-width:15px;height:15px;border-radius:8px;background:#e53935;color:#fff;font:700 10px/15px sans-serif;font-style:normal;text-align:center;padding:0 2px}
+.mt.crack{background:linear-gradient(135deg,transparent 46%,#ff5252 47%,#ff5252 53%,transparent 54%),#ffffff14}
+</style></head><body class="app"><div id="app">
+<div id="topbar"><b class="ttl">♠ PLO5 Trainer</b><span id="gInfo" class="note"></span><span class="tb">
+<button class="sm" onclick="tg('drawer')">☰ Learn</button><button class="sm" onclick="tg('pLog')">Log</button><button class="sm" onclick="tg('pRep')">Replay</button><button class="sm" onclick="renderHist(0);tg('pHist')">History</button><button class="sm" onclick="tg('pOpt')">⚙</button><button class="sm" id="theme">◐</button><button class="sm deal" id="gStart">Deal</button></span></div>
+<div id="stage"><div id="gTable" class="tablewrap"></div></div>
+<div id="hud"><button id="hudTog" onclick="document.getElementById('hud').classList.toggle('open')">Odds ▴</button><div id="hudBody"><div id="gHint"></div><aside id="dash" class="dash"><p class="note">Deal a hand — Mouk's live equity appears here.</p></aside></div></div>
+<div id="bottom"><div id="gReplay" class="rvbar" style="display:none"><button onclick="stepReplay('pst')">⏮</button><button onclick="stepReplay('prev')">◀</button><button onclick="stepReplay('next')">▶</button><button onclick="stepReplay('nst')">⏭</button><span id="gRvMsg"></span><button onclick="closeReplay()">✕</button></div><div id="gCtl"><div class="abar"><button class="raise" onclick="gStart.click()">Deal first hand</button></div></div></div>
+</div>
+<div id="drawer" class="sheet small"><div class="sheethead"><b>Learn &amp; tools</b><button class="sm" onclick="tg('drawer')">✕</button></div><details><summary>Lesson 1 — The one rule that runs everything</summary><section class="lesson"><h2>Lesson 1 — The one rule that runs everything</h2>
 <p>In Omaha you must use <b>exactly two</b> of your hole cards and <b>exactly three</b> from the board. Five-card PLO gives you 5 hole cards, so you hold <b>10</b> two-card combinations (PLO4: 6). Consequences: four to a flush on board with one suited card in hand = no flush; trips in your hand play as only a pair; a four-straight board needs two of your cards to make a straight.</p>
-<p>At an 8-handed table, 40 of the 52 cards are dealt to players. Every number in this page is computed live in your browser by exact enumeration or Monte Carlo simulation — nothing is hard-coded.</p></section>
-
-<section><h2>Tool 1 — Preflop hand category frequencies (exact)</h2>
-<p>Enumerates all 2,598,960 five-card starting hands. Takes a few seconds.</p><button id="pfRun">Enumerate all hands</button> <span class="prog" id="pfProg"></span><div id="pfOut"></div></section>
-
-<section class="lesson"><h2>Lesson 2 — What the starting-hand numbers mean</h2>
-<p>With 5 cards, <b>most hands contain a pair</b> and essentially every hand has at least two cards of one suit — "suited" is the default, so being suited is worth far less than in PLO4. Double-suited hands are common. What separates hands is <b>nut</b> potential: suited Aces, connected rundowns with no gaps, and high pairs that make top sets. Your opponents are also holding 10 combos each, so the average winning hand is stronger.</p></section>
-
-<section><h2>Tool 2 — PLO4 vs PLO5: how often does one player make a flush / straight by the river?</h2>
+<p>At an 8-handed table, 40 of the 52 cards are dealt to players. Every number in this page is computed live in your browser by exact enumeration or Monte Carlo simulation — nothing is hard-coded.</p></section></details><details><summary>Tool 1 — Preflop hand category frequencies (exact)</summary><section><h2>Tool 1 — Preflop hand category frequencies (exact)</h2>
+<p>Enumerates all 2,598,960 five-card starting hands. Takes a few seconds.</p><button id="pfRun">Enumerate all hands</button> <span class="prog" id="pfProg"></span><div id="pfOut"></div></section></details><details><summary>Lesson 2 — What the starting-hand numbers mean</summary><section class="lesson"><h2>Lesson 2 — What the starting-hand numbers mean</h2>
+<p>With 5 cards, <b>most hands contain a pair</b> and essentially every hand has at least two cards of one suit — "suited" is the default, so being suited is worth far less than in PLO4. Double-suited hands are common. What separates hands is <b>nut</b> potential: suited Aces, connected rundowns with no gaps, and high pairs that make top sets. Your opponents are also holding 10 combos each, so the average winning hand is stronger.</p></section></details><details><summary>Tool 2 — PLO4 vs PLO5: how often does one player make a flush / straight by the river?</summary><section><h2>Tool 2 — PLO4 vs PLO5: how often does one player make a flush / straight by the river?</h2>
 <p>Deals a random 5-card hand and board; the PLO4 hand is the first 4 of the same 5 cards, so the difference is purely the extra card.</p>
-Trials: <select id="cmpN"><option>20000</option><option selected>60000</option><option>200000</option></select> <button id="cmpRun">Run simulation</button> <span class="prog" id="cmpProg"></span><div id="cmpOut"></div></section>
-
-<section class="lesson"><h2>Lesson 3 — Outs, the Rule of 4 and 2, and the 2-card trap</h2>
-<p>An <b>out</b> is an unseen card that improves you to your target hand. Rough conversion: on the flop, outs × 4 ≈ % to hit by river; on the turn, outs × 2 ≈ % to hit on the river. Common PLO5 flop draws: flush draw 9 outs (~35% by river), open-ended straight 8 (~31.5%), 13-card wrap (~48%), 16–20-out wraps (55–70%), wrap + flush draw 20+ (65%+). In Omaha, only count outs your <b>two</b> hole cards can use, and discount outs that pair the board (they can give an opponent a full house) or make a non-nut flush. The calculator below counts outs exactly by trying every unseen card under the 2+3 rule.</p></section>
-
-<section><h2>Tool 3 — Drawing-odds &amp; equity calculator</h2>
+Trials: <select id="cmpN"><option>20000</option><option selected>60000</option><option>200000</option></select> <button id="cmpRun">Run simulation</button> <span class="prog" id="cmpProg"></span><div id="cmpOut"></div></section></details><details><summary>Lesson 3 — Outs, the Rule of 4 and 2, and the 2-card trap</summary><section class="lesson"><h2>Lesson 3 — Outs, the Rule of 4 and 2, and the 2-card trap</h2>
+<p>An <b>out</b> is an unseen card that improves you to your target hand. Rough conversion: on the flop, outs × 4 ≈ % to hit by river; on the turn, outs × 2 ≈ % to hit on the river. Common PLO5 flop draws: flush draw 9 outs (~35% by river), open-ended straight 8 (~31.5%), 13-card wrap (~48%), 16–20-out wraps (55–70%), wrap + flush draw 20+ (65%+). In Omaha, only count outs your <b>two</b> hole cards can use, and discount outs that pair the board (they can give an opponent a full house) or make a non-nut flush. The calculator below counts outs exactly by trying every unseen card under the 2+3 rule.</p></section></details><details><summary>Tool 3 — Drawing-odds &amp; equity calculator</summary><section><h2>Tool 3 — Drawing-odds &amp; equity calculator</h2>
 <p>Enter cards like <code>AhKh7c8d2s</code> (T = ten; suits s h d c).</p>
 Hole cards (5): <input id="hIn" value="AhKh7c8d2s" size="18"> Board (3 or 4): <input id="bIn" value="Qh5h3c" size="14"><br>
 Target: <select id="tgt"><option value="0">Any improvement</option><option value="1">Pair+</option><option value="2">Two pair+</option><option value="3">Trips+</option><option value="4" selected>Straight+</option><option value="5">Flush+</option><option value="6">Full house+</option></select>
 Equity trials per opponent count: <select id="eqN"><option>1000</option><option selected>3000</option><option>10000</option></select>
-<button id="calcRun">Calculate</button><div id="calcOut"></div></section>
-
-<section class="lesson"><h2>Lesson 4 — Equity shrinks as players are added, but not evenly</h2>
-<p>Made hands without redraws (overpairs, two pair, even the current nut straight) lose value fast multiway, because every extra 5-card hand brings 10 more ways to draw out. Big draws hold value better — they are often <i>ahead</i> of their fair share 1/(N+1) multiway because they win big pots when they get there. Sets are strong but in PLO5 set-over-set and flush/straight runouts happen often. Compare each cell to the fair share, not to 50%.</p></section>
-
-<section><h2>Tool 4 — Equity of typical flop holdings vs 1–7 opponents</h2>
-Trials per cell: <select id="tblN"><option>1000</option><option selected>2500</option><option>6000</option></select> <button id="tblRun">Run table</button> <span class="prog" id="tblProg"></span><div id="tblOut"></div></section>
-
-<section class="lesson"><h2>Lesson 5 — Putting it together at 8-handed</h2>
-<p>Preflop: favor hands where all 5 cards work together (nut suits, connected ranks, high pairs); avoid trips and disconnected "danglers." Flop: compare your equity to pot odds — to call a bet of B into pot P you need equity &gt; B ÷ (P + 2B) (pot-sized bet → 33%). Multiway, demand nut draws and redraws; second-nut flushes and bottom-end straights are frequent losers.</p></section>
-
-<section class="lesson"><h2>Lesson 6 — Practice at an 8-handed loose table</h2><p>Seven of eight home-game regulars sit in each hand (one sits out, rotating or your choice), each with a profile: Willy, Milty, David N, Rich, Todd, Rick, Yum Yum and L. Learn their tendencies; when Milty bets, he has it. Hints appear only after you act. Stacks reset to 100 BB (200 chips, blinds 1/2) every hand; betting is pot-limit. Watch the dashboard: your equity is recomputed each street versus the players still in. After every decision you get a heuristic "solver-style" hint (equity vs pot odds, fair share, outs, position, number of opponents) — it's a rule-of-thumb coach, <b>not</b> real solver output. Deviations can be replayed with the identical deck and opponent behavior.</p></section>
-<section id="practice"><h2>Practice table — 8-handed PLO5 (1/2, pot-limit)</h2>
-<div class="opts"><button id="gStart">Deal new hand</button> Sits out: <select id="gSitOut"></select> Think-time: <select id="gSpeed"><option value="0">Instant</option><option value="0.5">Fast</option><option value="1" selected>Realistic</option></select> <label><input type="checkbox" id="gWeighted" checked> Weight opponents to loose range</label> Equity trials: <select id="gIters"><option>800</option><option selected>2000</option><option>5000</option></select></div>
-<div id="gInfo" class="note"></div>
-<div class="gwrap"><div class="gmain"><div id="gTable" class="tablewrap"></div>
-<div id="gReplay" class="rvbar" style="display:none"><button onclick="stepReplay('pst')">⏮ Street</button><button onclick="stepReplay('prev')">◀ Action</button><button onclick="stepReplay('next')">Action ▶</button><button onclick="stepReplay('nst')">Street ⏭</button><span id="gRvMsg"></span><button onclick="closeReplay()">✕ Close replay</button></div>
-<div id="gCtl"></div><div id="gHint"></div></div><aside id="dash" class="dash"><p class="note">Deal a hand — Mouk's live equity appears here.</p></aside></div>
-<div class="opts">Replay a completed hand: <select id="gHands"></select> <button onclick="openReplay(+gHands.value)">▶ Step through</button></div>
-<details><summary><b>Session log &amp; leak finder</b> (open anytime)</summary><div id="sess"><p class="note">No decisions yet.</p></div></details>
-<details><summary>Hand history text</summary><pre id="gLog"></pre></details></section>
-<section><h2>Quiz</h2><div id="quiz"></div></section>
-<p class="note">All evaluation uses a built-in Omaha evaluator (2 hole + 3 board, best of all 10×10 combinations). Simulated numbers vary slightly run to run.</p>
-</main><script>// ==== CORE (shared) ====
+<button id="calcRun">Calculate</button><div id="calcOut"></div></section></details><details><summary>Lesson 4 — Equity shrinks as players are added, but not evenly</summary><section class="lesson"><h2>Lesson 4 — Equity shrinks as players are added, but not evenly</h2>
+<p>Made hands without redraws (overpairs, two pair, even the current nut straight) lose value fast multiway, because every extra 5-card hand brings 10 more ways to draw out. Big draws hold value better — they are often <i>ahead</i> of their fair share 1/(N+1) multiway because they win big pots when they get there. Sets are strong but in PLO5 set-over-set and flush/straight runouts happen often. Compare each cell to the fair share, not to 50%.</p></section></details><details><summary>Tool 4 — Equity of typical flop holdings vs 1–7 opponents</summary><section><h2>Tool 4 — Equity of typical flop holdings vs 1–7 opponents</h2>
+Trials per cell: <select id="tblN"><option>1000</option><option selected>2500</option><option>6000</option></select> <button id="tblRun">Run table</button> <span class="prog" id="tblProg"></span><div id="tblOut"></div></section></details><details><summary>Lesson 5 — Putting it together at 8-handed</summary><section class="lesson"><h2>Lesson 5 — Putting it together at 8-handed</h2>
+<p>Preflop: favor hands where all 5 cards work together (nut suits, connected ranks, high pairs); avoid trips and disconnected "danglers." Flop: compare your equity to pot odds — to call a bet of B into pot P you need equity &gt; B ÷ (P + 2B) (pot-sized bet → 33%). Multiway, demand nut draws and redraws; second-nut flushes and bottom-end straights are frequent losers.</p></section></details><details><summary>Lesson 6 — Practice at an 8-handed loose table</summary><section class="lesson"><h2>Lesson 6 — Practice at an 8-handed loose table</h2><p>Seven of eight home-game regulars sit in each hand (one sits out, rotating or your choice), each with a profile: Willy, Milty, David N, Rich, Todd, Rick, Yum Yum and L. Learn their tendencies; when Milty bets, he has it. Hints appear only after you act. Stacks reset to 100 BB (200 chips, blinds 1/2) every hand; betting is pot-limit. Watch the dashboard: your equity is recomputed each street versus the players still in. After every decision you get a heuristic "solver-style" hint (equity vs pot odds, fair share, outs, position, number of opponents) — it's a rule-of-thumb coach, <b>not</b> real solver output. Deviations can be replayed with the identical deck and opponent behavior.</p></section></details><details><summary>Quiz</summary><section><h2>Quiz</h2><div id="quiz"></div></section></details><p class="note">All evaluation uses a built-in Omaha evaluator (2 hole + 3 board, best of all 10×10 combinations). Simulated numbers vary slightly run to run.</p></div>
+<div id="pLog" class="sheet small"><div class="sheethead"><b>Session log &amp; leaks</b><button class="sm" onclick="tg('pLog')">✕</button></div><div id="sess"><p class="note">No decisions yet.</p></div><details><summary>Hand history text</summary><pre id="gLog"></pre></details></div>
+<div id="pRep" class="sheet small"><div class="sheethead"><b>Replay a completed hand</b><button class="sm" onclick="tg('pRep')">✕</button></div><select id="gHands"></select> <button onclick="tg('pRep');openReplay(+gHands.value)">▶ Step through</button><p class="note">Retry-from-mistake buttons are in the Log and in the hint after a deviation.</p></div>
+<div id="pHist" class="sheet small"><div class="sheethead"><b>Hand history (saved in this browser)</b><button class="sm" onclick="tg('pHist')">✕</button></div><div id="histWarn" class="bad"></div><div id="histTot"></div>
+<p><button class="sm" onclick="doExport()">Export save file</button> <button class="sm" onclick="histImp.click()">Import save file</button><input type="file" id="histImp" accept=".json,application/json" style="display:none" onchange="doImport(this)"> <button class="sm" style="background:#9e2a2a" onclick="if(confirm('Clear all saved hand history and leak stats?')){clearHist();renderHist(0);renderSession();}">Clear history</button></p>
+<div id="histTbl"></div></div>
+<div id="pOpt" class="sheet small"><div class="sheethead"><b>Options</b><button class="sm" onclick="tg('pOpt')">✕</button></div>
+<p>Sits out: <select id="gSitOut"></select></p><p>Think-time: <select id="gSpeed"><option value="0">Instant</option><option value="0.5">Fast</option><option value="1" selected>Realistic</option></select></p><p><label><input type="checkbox" id="gWeighted" checked> Weight opponents to loose range</label></p><p><label><input type="checkbox" id="gKeep"> Keep tilt &amp; drink between page loads</label></p><p>Equity trials: <select id="gIters"><option>800</option><option selected>2000</option><option>5000</option></select></p></div>
+<script>// ==== CORE (shared) ====
 const RANKS="23456789TJQKA",SUITS="shdc",SUITSYM={s:"♠",h:"♥",d:"♦",c:"♣"};
 function parseCard(s){s=s.trim();if(s.length!==2)return -1;const r=RANKS.indexOf(s[0].toUpperCase()),u=SUITS.indexOf(s[1].toLowerCase());return r<0||u<0?-1:r*4+u;}
 function cardStr(c){return RANKS[c>>2]+SUITS[c&3];}
@@ -267,7 +291,7 @@ function L(m){G.log.push(m);if(G.frames)G.frames.push({msg:m,street:G.street,boa
 function putIn(s,amt){amt=Math.min(amt,s.stack);s.stack-=amt;s.bet+=amt;s.total+=amt;if(s.stack===0)s.allin=true;return amt;}
 function gNewHand(){
   for(const s of G.seats){s.stack=G.START;Object.assign(s,{hand:[],folded:false,allin:false,bet:0,total:0});}
-  G.frames=[];G.handNo++;G.sitOut=G.sitOutSetting>=0?G.sitOutSetting:(G.handNo-1)%8;{let k=0;for(let i=1;i<8;i++){if(k===G.sitOut)k++;G.seats[i].prof=PROFILES[k];G.seats[i].name=PROFILES[k].name;k++;}}L(`${PROFILES[G.sitOut].name} sits out this hand.`);G.button=nextIdx(G.button);G.board=[];G.street=0;G.history=[];G.handOver=false;G.aggressor=-1;G.result="";
+  G.frames=[];G.handNo++;G.sitOut=G.sitOutSetting>=0?G.sitOutSetting:(G.handNo-1)%8;{let k=0;for(let i=1;i<8;i++){if(k===G.sitOut)k++;G.seats[i].prof=PROFILES[k];G.seats[i].name=PROFILES[k].name;k++;}}L(`${PROFILES[G.sitOut].name} sits out this hand.`);meterNewHand();for(const s of G.seats)s.calledPre=false;G.button=nextIdx(G.button);G.board=[];G.street=0;G.history=[];G.handOver=false;G.aggressor=-1;G.result="";
   G.seed=(G.rngNext()*4294967296)>>>0;G.deck=[...Array(52).keys()];for(let a=51;a>0;a--){const b=Math.floor(G.rngNext()*(a+1));[G.deck[a],G.deck[b]]=[G.deck[b],G.deck[a]];}let k=0;
   for(const s of G.seats)s.hand=G.deck.slice(k,k+=5);G.deckPos=k;
   const sb=nextIdx(G.button),bb=nextIdx(sb);
@@ -288,7 +312,7 @@ function gAct(i,type,to){ // type: fold|check|call|raise (bet = raise when curBe
   if(type==="fold"&&lg.toCall===0)type="check";
   if(type==="fold"){s.folded=true;L(`${s.name} folds.`);}
   else if(type==="check"){L(`${s.name} checks.`);}
-  else if(type==="call"){const a=putIn(s,lg.toCall);L(`${s.name} calls ${a}${s.allin?" (all-in)":""}.`);}
+  else if(type==="call"){if(G.street===0)s.calledPre=true;const a=putIn(s,lg.toCall);L(`${s.name} calls ${a}${s.allin?" (all-in)":""}.`);}
   else{to=Math.round(Math.max(lg.minTo,Math.min(lg.maxTo,to)));const prev=G.curBet;putIn(s,to-s.bet);
     if(s.bet>G.curBet){if(s.bet-prev>=G.minRaise)G.minRaise=s.bet-prev;G.curBet=s.bet;G.need=new Set(G.seats.map((x,j)=>j).filter(j=>j!==i&&canAct(G.seats[j])));G.aggressor=i;}
     L(`${s.name} ${prev===0?"bets":"raises to"} ${s.bet}${s.allin?" (all-in)":""}.`);}
@@ -309,14 +333,65 @@ function gAdvance(){ // run bots until user's turn or hand end
     if(c>=9){G.need.clear();continue;}
     G.toAct=i;
     if(G.seats[i].isUser){G.ui?G.ui.prompt(legal(i)):0;return "user";}
-    if(G.speed>0&&G.ui){G.thinking=i;G.ui.think(i);const tk=G.seats[i].prof.think*G.speed;setTimeout(()=>{G.thinking=-1;const [t,to]=botDecide(i);gAct(i,t,to);gAdvance();},tk);return "wait";}
+    if(G.speed>0&&G.ui){G.thinking=i;G.ui.think(i);const tk=effProf(G.seats[i]).think*G.speed;setTimeout(()=>{G.thinking=-1;const [t,to]=botDecide(i);gAct(i,t,to);gAdvance();},tk);return "wait";}
     const [t,to]=botDecide(i);gAct(i,t,to);
   }
   throw new Error("advance guard");
 }
+
+
+// ===== Persistent hand history & leak log (localStorage) =====
+const HCAP=5000,LCAP=20000;
+const PH={sid:Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36),warn:"",
+ ls(){try{return typeof localStorage!=="undefined"?localStorage:null}catch(e){return null}},
+ get(k,d){const s=this.ls();if(!s)return d;try{const v=s.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},
+ set(k,v){const s=this.ls();if(!s)return true;try{s.setItem(k,JSON.stringify(v));return true}catch(e){this.warn="⚠ Browser storage is full ("+e.name+"). Export your save file and clear old history.";return false}}};
+function histAll(){return PH.get("plo5hist",[]);}
+function leaksAll(){return PH.get("plo5leaks",[]);}
+function recordHand(won){
+  const gno=PH.get("plo5gno",0)+1;PH.set("plo5gno",gno);
+  const u=G.seats[0],dec=G.session.filter(r=>r.hand===G.handNo&&!r.saved);
+  const rec={id:PH.sid+":"+G.handNo,gno,t:new Date().toISOString(),opp:G.seats.slice(1).map(s=>s.name),
+    winners:G.seats.map((s,j)=>won[j]>0?s.name:null).filter(Boolean),net:won[0]-u.total,pot:won.reduce((a,b)=>a+b,0),
+    hand:u.hand.map(cardStr).join(""),board:G.board.map(cardStr).join(""),
+    dec:dec.map(r=>({st:r.street,a:r.action,h:r.hint,ok:r.ok,l:+r.loss.toFixed(1)}))};
+  let H=histAll().filter(x=>x.id!==rec.id);H.push(rec);if(H.length>HCAP)H=H.slice(H.length-HCAP);PH.set("plo5hist",H);
+  let Lk=leaksAll().filter(x=>x.id!==rec.id);for(const r of dec)Lk.push({id:rec.id,st:r.street,ty:r.type,ok:r.ok,l:+r.loss.toFixed(1)});if(Lk.length>LCAP)Lk=Lk.slice(Lk.length-LCAP);PH.set("plo5leaks",Lk);
+  return rec;}
+function histTotals(H){const n=H.length,net=H.reduce((a,r)=>a+r.net,0),w=H.filter(r=>r.winners.includes("Mouk")).length;return {n,net,winRate:n?w/n:0};}
+function mergeSave(obj){if(!obj||!Array.isArray(obj.hist))throw new Error("Not a PLO5 save file");
+  const m=new Map(histAll().map(r=>[r.id,r]));for(const r of obj.hist)if(r&&r.id)m.set(r.id,r);let H=[...m.values()].sort((a,b)=>a.t<b.t?-1:1);if(H.length>HCAP)H=H.slice(H.length-HCAP);
+  const lm=new Map();for(const x of leaksAll().concat(obj.leaks||[]))lm.set(x.id+"|"+x.st+"|"+x.ty+"|"+x.l+"|"+x.ok,x);
+  PH.set("plo5hist",H);PH.set("plo5leaks",[...lm.values()].slice(-LCAP));PH.set("plo5gno",Math.max(PH.get("plo5gno",0),obj.gno||0,...H.map(r=>r.gno||0)));return H.length;}
+function exportSave(){return JSON.stringify({app:"plo5-trainer",v:1,exported:new Date().toISOString(),gno:PH.get("plo5gno",0),hist:histAll(),leaks:leaksAll(),meters:G.meters});}
+function clearHist(){const s=PH.ls();if(s){s.removeItem("plo5hist");s.removeItem("plo5leaks");s.removeItem("plo5gno");}}
+// ===== Drink & tilt meters (Yum Yum, David N) =====
+const METERED=["Yum Yum","David N"];
+function freshMeters(){const m={};for(const n of METERED)m[n]={drink:0,tilt:0,dealt:0};return m;}
+G.keep=false;G.meters=freshMeters();
+try{if(typeof localStorage!=="undefined"&&localStorage.getItem("plo5keep")==="1"){G.keep=true;const s=JSON.parse(localStorage.getItem("plo5meters")||"null");if(s)G.meters=s;}}catch(e){}
+function saveMeters(){try{if(typeof localStorage==="undefined")return;localStorage.setItem("plo5keep",G.keep?"1":"0");if(G.keep)localStorage.setItem("plo5meters",JSON.stringify(G.meters));else localStorage.removeItem("plo5meters");}catch(e){}}
+const cap9=x=>Math.max(0,Math.min(9,x));
+function drinkLvl(n){const d=G.meters[n]?G.meters[n].drink:0;return d>=7?3:d>=4?2:d>=2?1:0;}
+function tiltLvl(n){const t=G.meters[n]?G.meters[n].tilt:0;return t>=9?3:t>=6?2:t>=3?1:0;}
+function meterNewHand(){for(const n of METERED){const m=G.meters[n];if(PROFILES[G.sitOut].name===n){m.drink=cap9(m.drink-1);continue;}m.dealt++;if(m.dealt%5===0)m.drink=cap9(m.drink+1);}saveMeters();}
+function meterShowdown(won,vals){G.seats.forEach((s,j)=>{const m=s.prof&&G.meters[s.name];if(!m)return;const lost=s.total-won[j];
+  if(lost>=40){m.drink=cap9(m.drink+1);m.tilt=cap9(m.tilt+1);if(vals&&!s.folded&&catOf(vals[j])>=4)m.tilt=cap9(m.tilt+1);} // bad beat: lost at showdown with a straight+
+  else if(-lost>=40)m.tilt=cap9(m.tilt-1);});saveMeters();}
+window.bump=(n,k)=>{const m=G.meters[n];m[k]=m[k]>=9?0:m[k]+1;saveMeters();if(typeof renderTable==="function")renderTable();};
+function effProf(s){const p=Object.assign({},s.prof);const d=drinkLvl(s.name),t=tiltLvl(s.name);p.size=1;p.rand=0;p.pred=false;p.wide=1;
+  if(d>=1){p.size=1.15;p.tight-=0.04;}
+  if(d>=2){p.size=1.3;p.rand=0.1;p.pred=true;}
+  if(d>=3){p.rand=0.2;p.over=true;p.think*=1.6;p.wide=1.5;}
+  if(t>=1){p.tight-=0.05;p.agg=Math.min(1,p.agg+0.1);}
+  if(t>=2){p.bluff+=0.12;p.chase+=0.3;}
+  if(t>=3){p.bluff+=0.15;p.wide*=1.3;p.over=true;}
+  return p;}
 function botDecide(i){
-  const s=G.seats[i],p=s.prof,lg=legal(i),pot=lg.pot,R=G.rngNext();
-  const sz=f=>s.bet+lg.toCall+Math.round((pot+lg.toCall)*f);
+  const s=G.seats[i],p=effProf(s),lg=legal(i),pot=lg.pot,R=G.rngNext();
+  const sz=f=>s.bet+lg.toCall+Math.round((pot+lg.toCall)*Math.min(1,(p.over&&G.rngNext()<0.5?1:f)*p.size));
+  if(p.rand&&G.rngNext()<p.rand){const opts=[lg.toCall>0?"fold":"check",lg.toCall>0?"call":"check"];if(lg.canRaise)opts.push("raise");const t=opts[Math.floor(G.rngNext()*opts.length)];return t==="raise"?["raise",sz(0.3+G.rngNext()*0.7)]:[t];}
+  if(p.pred&&G.street>0&&lg.toCall===0&&s.calledPre&&lg.canRaise)return ["raise",sz(0.7)];
   const odds=lg.toCall>0?lg.toCall/(pot+lg.toCall):0;
   if(G.street===0){const sc=pfScore(s.hand);const play=sc>=p.tight||R<p.bluff*0.5;
     if(!play)return lg.toCall===0?["check"]:["fold"];
@@ -334,7 +409,7 @@ function botDecide(i){
   if(lg.canRaise&&nutsOK&&made>=0.78&&R<p.agg)return ["raise",sz(1)];
   if(lg.canRaise&&R<p.bluff*0.3)return ["raise",sz(0.8)];
   if(p.nutReq>=4&&!nutsOK&&drawEq<0.45)return ["fold"];
-  const eqGuess=Math.max(nutsOK?made*0.8:made*0.5,drawEq*p.chase*(p.math?1:1.0));
+  const eqGuess=(p.wide||1)*Math.max(nutsOK?made*0.8:made*0.5,drawEq*p.chase*(p.math?1:1.0));
   if(eqGuess>odds||(left>0&&outs>=8&&G.rngNext()<p.chase*0.25))return ["call"];
   return ["fold"];
 }
@@ -355,7 +430,7 @@ function gShowdown(){
     won.forEach((w,j)=>{if(w)L(`${G.seats[j].name} wins ${w}.`);});}
   const u=G.seats[0];G.result=`Mouk ${won[0]-u.total>=0?"won":"lost"} ${Math.abs(won[0]-u.total)} chips this hand.`;
   G.seats.forEach((s,j)=>{s.stack+=won[j];s.net+=won[j]-s.total;});
-  G.handOver=true;G.lastWon=won;(G.hands=G.hands||[]).push({no:G.handNo,frames:G.frames.slice(),result:G.result});G.ui&&G.ui.end();return "end";
+  G.lastRec=recordHand(won);meterShowdown(won,live.length>1?G.seats.map(s=>s.folded?-1:evalOmaha(s.hand,G.board)):null);G.handOver=true;G.lastWon=won;(G.hands=G.hands||[]).push({no:G.handNo,frames:G.frames.slice(),result:G.result});G.ui&&G.ui.end();return "end";
 }
 // hero equity vs active opponents (random or loose-weighted range)
 function heroEquity(iters,weighted,me){me=me||0;
@@ -372,7 +447,7 @@ function heroEquity(iters,weighted,me){me=me||0;
 }
 
 // ===== snapshots for replay =====
-function gSnapshot(){const o={};for(const k of ["seats","frames","button","board","deck","deckPos","street","log","handNo","handOver","history","curBet","minRaise","toAct","aggressor","rs","result"])o[k]=JSON.parse(JSON.stringify(G[k]===undefined?null:G[k]));o.need=[...G.need];return o;}
+function gSnapshot(){const o={};for(const k of ["seats","meters","frames","button","board","deck","deckPos","street","log","handNo","handOver","history","curBet","minRaise","toAct","aggressor","rs","result"])o[k]=JSON.parse(JSON.stringify(G[k]===undefined?null:G[k]));o.need=[...G.need];return o;}
 function gRestore(o){for(const k in o)G[k]=JSON.parse(JSON.stringify(o[k]));G.need=new Set(o.need);}
 // ===== heuristic "solver-style" hint (NOT real solver output) =====
 function handType(i){const s=G.seats[i];if(G.street===0)return pfScore(s.hand)>0.45?"Strong preflop":"Weak/marginal preflop";
@@ -385,7 +460,11 @@ function gHint(i,iters){
   if(G.aggressor>0&&!G.seats[G.aggressor].folded&&lg.toCall>0){const ap=G.seats[G.aggressor].prof;
     if(ap.nutReq>=4){eqA=eq*0.6;note=` ${ap.name} only bets near-nuts — discounted your equity.`;}
     else if(ap.bluff>=0.25){eqA=Math.min(1,eq*1.15);note=` ${ap.name} bluffs a lot — calling a bit lighter is OK.`;}
-    else if(ap.bluff<=0.02){eqA=eq*0.85;note=` ${ap.name} rarely bluffs — respect the bet.`;}}
+    else if(ap.bluff<=0.02){eqA=eq*0.85;note=` ${ap.name} rarely bluffs — respect the bet.`;}
+    const an=G.seats[G.aggressor].name,dl=drinkLvl(an),tl=tiltLvl(an);
+    if(an==="Yum Yum"&&dl>=2)note+=` Yum Yum is drunk, but his big bets are still strong.`;
+    else if(dl>=1){eqA=Math.min(1,eqA*(1+0.07*dl));note+=` ${an} is ${["","buzzed","drunk","hammered"][dl]} — his big bets are sloppy.`;}
+    if(tl>=1){eqA=Math.min(1,eqA*(1+0.05*tl));note+=` ${an} is on tilt — wider bluffs.`;}}
   if(lg.toCall===0){
     if(lg.canRaise&&eq>fair*1.6){act="raise";why=`Bet: ${(eq*100).toFixed(0)}% equity vs ${opp} opp is well above fair share ${(fair*100).toFixed(0)}% — build the pot.`;}
     else if(lg.canRaise&&nut>=13&&opp<=2){act="raise";why=`Semi-bluff: ${nut} strong outs and few opponents give fold equity plus a big draw.`;}
@@ -426,10 +505,10 @@ function tableHTML(st){ // st: {seats,board,button,pot,toAct,thinking,over,revea
     const prof=G.seats[i]&&G.seats[i].prof&&!s.isUser?G.seats[i].prof:null;
     h+=`<div class="seatT ${s.folded?'fold':''} ${st.toAct===i?'act':''} ${st.thinking===i?'thinking':''} ${s.isUser?'me':''}" style="left:${x}%;top:${y}%">
       <div class="hcards">${s.folded&&!st.revealAll?'':s.hand.map(c=>pcard(c,up,!s.isUser)).join("")}</div>
-      <div class="tag" ${prof?`title="${prof.blurb}"`:''}><b>${s.name}</b>${s.allin?' <em>ALL-IN</em>':''}<div class="stack">${s.stack}</div>${prof?`<div class="blurb">${prof.blurb}</div>`:''}${st.thinking===i?'<div class="dots">thinking<span>.</span><span>.</span><span>.</span></div>':''}</div></div>`;
+      <div class="tag" ${prof?`title="${prof.blurb}"`:''}><b>${s.name}</b>${G.meters&&G.meters[s.name]&&!s.isUser?`<span class="meters"><button class="mt" title="Drinks (tap +1, wraps at 9)" onclick="event.stopPropagation();bump('${s.name}','drink')">🥃<i>${G.meters[s.name].drink}</i></button><button class="mt crack" title="Tilt (tap +1, wraps at 9)" onclick="event.stopPropagation();bump('${s.name}','tilt')">🂠<i>${G.meters[s.name].tilt}</i></button></span>`:''}${s.allin?' <em>ALL-IN</em>':''}<div class="stack">${s.stack}</div>${prof?`<div class="blurb">${prof.blurb}</div>`:''}${st.thinking===i?'<div class="dots">thinking<span>.</span><span>.</span><span>.</span></div>':''}</div></div>`;
     if(s.bet)h+=`<div class="bet" style="left:${bx}%;top:${by}%">${chips(s.bet)}</div>`;
-    if(i===st.button)h+=`<div class="marker dealer" style="left:${(x+bx)/2+4}%;top:${(y+by)/2}%">D</div>`;
-    else if(i===sb||i===bb)h+=`<div class="marker blind" style="left:${(x+bx)/2+4}%;top:${(y+by)/2}%">${i===sb?'SB':'BB'}</div>`;});
+    const mx=i===0?bx+14:(x+bx)/2+4,my=i===0?by:(y+by)/2;if(i===st.button)h+=`<div class="marker dealer" style="left:${mx}%;top:${my}%">D</div>`;
+    else if(i===sb||i===bb)h+=`<div class="marker blind" style="left:${mx}%;top:${my}%">${i===sb?'SB':'BB'}</div>`;});
   return h+`</div>`;}
 function liveState(){const show=G.handOver&&liveSeats().length>1;return {seats:G.seats,board:G.board,button:G.button,pot:potTotal(),toAct:G.handOver?-1:G.toAct,thinking:G.thinking,revealAll:show,label:G.handOver?G.result:STREETS[G.street]};}
 function renderTable(){if(RV||!G.seats.length)return;$("gTable").innerHTML=tableHTML(liveState());
@@ -474,4 +553,32 @@ $("gSitOut").onchange=e=>G.sitOutSetting=+e.target.value;$("gSpeed").onchange=e=
 $("gStart").onclick=()=>{if(G.thinking>=0&&!G.handOver)return;closeReplay();if(!G.seats.length)gInit();$("gHint").innerHTML="";gNewHand();};
 $("gTable").innerHTML=tableHTML({seats:PROFILES.slice(0,8).map((p,i)=>({name:i?p.name:"Mouk",stack:200,bet:0,hand:[],isUser:!i})),board:[],button:0,pot:0,toAct:-1,label:"Press Deal to start"});
 if(typeof location!=="undefined"&&location.hash==="#demo"){document.body.classList.add("demo");G.speed=0;gInit();gNewHand();}
+
+const SEATPOS_P=[[50,96],[10,77],[8,49],[13,21],[50,4],[87,21],[92,49],[90,77]],BETPOS_P=[[50,79],[28,69],[26,49],[30,31],[50,21],[70,31],[74,49],[72,69]];
+const SEATPOS_L=SEATPOS.slice(),BETPOS_L=BETPOS.slice();
+const SEATPOS_S=[[50,92],[17,83],[7,50],[17,15],[50,8],[83,15],[93,50],[83,83]],BETPOS_S=[[50,72],[30,70],[22,50],[30,30],[50,26],[70,30],[78,50],[70,70]];
+function applyOrient(){const sh=typeof window.matchMedia==="function"&&window.matchMedia("(orientation: landscape) and (max-height: 500px)").matches;const p=typeof window.matchMedia==="function"&&window.matchMedia("(orientation: portrait)").matches;const S=sh?SEATPOS_S:p?SEATPOS_P:SEATPOS_L,B=sh?BETPOS_S:p?BETPOS_P:BETPOS_L;for(let i=0;i<8;i++){SEATPOS[i]=S[i];BETPOS[i]=B[i];}}
+if(document.getElementById("gKeep")){const k=document.getElementById("gKeep");k.checked=G.keep;k.onchange=e=>{G.keep=e.target.checked;saveMeters();};}
+window.tg=id=>{for(const x of ["drawer","pLog","pRep","pOpt","pHist"])if(x!==id)$(x).classList.remove("open");$(id).classList.toggle("open");};
+{const _d=dash;dash=function(){_d();const h=G.history[G.history.length-1];if(h)$("hudTog").innerHTML=`Mouk <b>${pct(h.eq)}</b> · W ${pct(h.win)} T ${pct(h.tie)} · vs ${h.opp} ▴`;};}
+{const _u=window.uAct;window.uAct=t=>{_u(t);$("hud").classList.add("open");};}
+let histPage=0;
+window.renderHist=pg=>{histPage=pg;const H=histAll().slice().reverse(),T=histTotals(H),PS=25,np=Math.max(1,Math.ceil(H.length/PS));
+  $("histWarn").textContent=PH.warn;
+  $("histTot").innerHTML=`<p><b>${T.n}</b> hands · net <b class="${T.net>=0?'good':'bad'}">${T.net>=0?'+':''}${T.net}</b> chips · won ${pct(T.winRate)} of hands</p>`;
+  $("histTbl").innerHTML=`<table><tr><th>#</th><th>When</th><th>Mouk</th><th>Board</th><th>Pot</th><th>Winner</th><th>±</th><th>Hints</th></tr>${H.slice(pg*PS,pg*PS+PS).map(r=>`<tr title="Opponents: ${r.opp.join(', ')}"><td>${r.gno}</td><td>${new Date(r.t).toLocaleString([], {month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'})}</td><td>${r.hand}</td><td>${r.board||'—'}</td><td>${r.pot}</td><td>${r.winners.join(', ')}</td><td class="${r.net>=0?'good':'bad'}">${r.net>=0?'+':''}${r.net}</td><td>${r.dec.filter(d=>d.ok).length}/${r.dec.length}</td></tr>`).join("")}</table>
+  <p>${pg>0?`<button class="sm" onclick="renderHist(${pg-1})">◀ Newer</button>`:''} Page ${pg+1}/${np} ${pg<np-1?`<button class="sm" onclick="renderHist(${pg+1})">Older ▶</button>`:''}</p>`;};
+window.doExport=()=>{const b=new Blob([exportSave()],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="plo5-save-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();a.remove();};
+window.doImport=inp=>{const f=inp.files[0];if(!f)return;f.text().then(t=>{try{const n=mergeSave(JSON.parse(t));PH.warn="";renderHist(0);renderSession();alert("Imported. History now has "+n+" hands.");}catch(e){alert("Import failed: "+e.message);}inp.value="";});};
+{const _rs=renderSession;renderSession=function(){_rs();const L=leaksAll();if(!L.length)return;const agg=(k)=>{const o={};for(const x of L){const v=o[x[k]]=o[x[k]]||{n:0,m:0,l:0};v.n++;if(!x.ok){v.m++;v.l+=x.l;}}return o;};
+  const tb=(o,t)=>`<h4>${t}</h4><table><tr><th></th><th>Decisions</th><th>Mistakes</th><th>Est. chips lost</th></tr>${Object.entries(o).sort((a,b)=>b[1].l-a[1].l).map(([k,v])=>`<tr><td>${k}</td><td>${v.n}</td><td>${v.m}</td><td>${v.l.toFixed(0)}</td></tr>`).join("")}</table>`;
+  $("sess").innerHTML=`<h3 style="font-size:13px">This session</h3>`+$("sess").innerHTML+`<h3 style="font-size:13px">All time (saved, ${L.length} decisions)</h3><div class="two">${tb(agg("st"),"By street")+tb(agg("ty"),"By hand type")}</div>`;};}
+renderSession();
+
+applyOrient();
+if(typeof window.innerWidth==="number"&&window.innerWidth>=1100&&window.innerHeight>=600)document.getElementById("hud").classList.add("open");
+function fitHud(){const b=document.getElementById("bottom");if(b&&b.offsetHeight!==undefined)document.documentElement.style.setProperty("--bottomH",(b.offsetHeight+6)+"px");}
+if(typeof ResizeObserver==="function")new ResizeObserver(fitHud).observe(document.getElementById("bottom"));
+if(typeof window.addEventListener==="function")window.addEventListener("resize",()=>{applyOrient();if(RV)showFrame();else if(G.seats.length)renderTable();});
+if(G.seats.length)renderTable();
 </script></body></html>
