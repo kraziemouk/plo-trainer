@@ -254,7 +254,7 @@ const PROFILES=[
  {name:"Rich",blurb:"Doctor. Conservative, but gambles when outs and pot odds justify it.",tight:0.38,agg:0.45,bluff:0.05,chase:1.0,nutReq:2,think:1200,math:true},
  {name:"Todd",blurb:"Plays like Rich (pot-odds gambler) but tanks for a long time.",tight:0.38,agg:0.45,bluff:0.05,chase:1.0,nutReq:2,think:3200,math:true},
  {name:"Rick",blurb:"Drinks, loves playing cards. Loose gambler who bluffs.",tight:0.12,agg:0.6,bluff:0.3,chase:1.4,nutReq:0,think:700},
- {name:"Yum Yum",blurb:"Never bluffs. Chases draws a lot.",tight:0.22,agg:0.4,bluff:0.0,chase:1.8,nutReq:1,think:900},
+ {name:"Yum Yum",blurb:"Never bluffs. A chaser: calls to see cards with draws, rarely raises or shoves.",tight:0.22,agg:0.15,bluff:0.0,chase:1.8,drawRaise:0.1,nutReq:1,think:900},
  {name:"L",blurb:"Like Yum Yum: (almost) never bluffs, but chases less often.",tight:0.28,agg:0.4,bluff:0.02,chase:1.2,nutReq:1,think:900},
 ];
 const STREETS=["Preflop","Flop","Turn","River"];
@@ -329,7 +329,7 @@ function botDecide(i){
   if(lg.toCall===0){
     if(lg.canRaise&&nutsOK&&made>0.6&&G.rngNext()<p.agg+0.3)return ["raise",sz(0.6+0.4*p.agg)];
     if(lg.canRaise&&G.rngNext()<p.bluff+(G.aggressor===i?p.agg*0.4:0)&&p.bluff>0)return ["raise",sz(0.5+0.5*G.rngNext())];
-    if(lg.canRaise&&drawEq>0.4&&G.rngNext()<p.agg*p.chase*0.5)return ["raise",sz(0.75)];
+    if(lg.canRaise&&drawEq>0.4&&G.rngNext()<p.agg*p.chase*0.5*(p.drawRaise??1))return ["raise",sz(0.75)];
     return ["check"];}
   if(lg.canRaise&&nutsOK&&made>=0.78&&R<p.agg)return ["raise",sz(1)];
   if(lg.canRaise&&R<p.bluff*0.3)return ["raise",sz(0.8)];
