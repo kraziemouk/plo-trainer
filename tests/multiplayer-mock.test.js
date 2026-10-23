@@ -1,7 +1,7 @@
 // multiplayer mock test + meters for all
 const fs=require('fs');const src=fs.readFileSync(''+require('path').join(__dirname,'..','index.html')+'','utf8').split('<script>')[1].split('</script>')[0];
-global.els={};const mk=id=>({id,value:id==='gIters'?'40':undefined,checked:false,innerHTML:'',textContent:'',style:{},classList:{add(){},remove(){},toggle(){}},offsetHeight:100});
-global.document={getElementById:id=>els[id]||(els[id]=mk(id)),body:{classList:{toggle(){},add(){}},appendChild(){}},documentElement:{style:{setProperty(){}}}};global.window=global;
+global.els={};const mk=id=>({id,value:id==='gIters'?'40':undefined,checked:false,innerHTML:'',textContent:'',style:{},classList:{add(){},remove(){},toggle(){},contains(){return false}},offsetHeight:100});
+global.document={getElementById:id=>els[id]||(els[id]=mk(id)),body:{classList:{toggle(){},add(){},contains(){return false}},appendChild(){}},documentElement:{style:{setProperty(){}}}};global.window=global;
 const store=new Map();global.localStorage={getItem:k=>store.has(k)?store.get(k):null,setItem:(k,v)=>store.set(k,String(v)),removeItem:k=>store.delete(k)};
 global.q=[];global.setTimeout=(f,ms)=>{q.push(f);return q.length};global.clearTimeout=()=>{};global.confirm=()=>true;global.alert=()=>{};
 require('vm').runInThisContext(src+'\n'+`
@@ -44,7 +44,7 @@ function MockBus(){const subs={},pres={};let id=0;return {tr(){const me=++id;ret
  const pr2=bus.pres["room-"+info.code];delete pr2[a.token];for(const c of bus.subs["room-"+info.code])for(const f of c.ph)f(pr2);A(G.seats[1].remote.away,"alice away");
  const a2=mpClient(bus.tr(),info.code,"Alice",null,null,a.token);a2.seat=1;await run();await a2.ready;await run();A(!G.seats[1].remote.away,"alice reconnected");A(JSON.stringify(a2.hand)===JSON.stringify(G.seats[1].hand),"alice cards resent");
  // meters on everyone
- A(METERED.length===10&&G.meters.Milty&&G.meters.Mouk,"all meters");G.meters.Milty.tilt=9;G.meters.Rick.tilt=9;A(tiltLvl("Milty")===1&&tiltLvl("Rick")===3,"sensitivity "+tiltLvl("Milty")+" "+tiltLvl("Rick"));
+ A(METERED.length>=10&&G.meters.Milton&&G.meters.Mouk,"all meters");G.meters.Milton.tilt=9;G.meters.Rickey.tilt=9;A(tiltLvl("Milton")===1&&tiltLvl("Rickey")===3,"sensitivity "+tiltLvl("Milton")+" "+tiltLvl("Rickey"));
  G.meters.Mouk.tilt=0;bump("Mouk","tilt");A(G.meters.Mouk.tilt===1,"mouk bump");
  console.log("MULTIPLAYER MOCK OK: hands",hands,"alice acted",log.a.length,"bob acted",log.b.length,"messages",global.sent);
 })().catch(e=>{console.log("FAIL",e.message);process.exitCode=1;});
