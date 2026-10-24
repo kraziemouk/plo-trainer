@@ -424,6 +424,7 @@ const PROFILES=[
  {name:"Yum",id:"Miguel",blurb:"Never bluffs. A chaser: calls to see cards with draws, rarely raises or shoves.",tight:0.22,agg:0.15,bluff:0.0,chase:1.8,drawRaise:0.1,nutReq:1,think:900},
  {name:"L",blurb:"Owns a trucking company and an HVAC company. Pragmatic, hardworking, risk-aware: fairly tight value-oriented TAG, pot-odds disciplined, bets strong hands firmly, rarely bluffs.",tight:0.4,agg:0.5,bluff:0.03,chase:0.9,nutReq:2,think:900,math:true,valueSize:1.15},
  {name:"Jamal",blurb:"Business owner, similar mold to L: tight, value-oriented TAG, pot-odds disciplined, low bluffing, steady temperament.",tight:0.37,agg:0.55,bluff:0.05,chase:0.95,nutReq:2,think:950,math:true,valueSize:1.1},
+ {name:"Ben",blurb:"Dallas medical-device territory manager (BioTAB Healthcare); ex-Spec's Liquor area sales manager; ~19 yrs in sales & business development. Relationship-driven closer: sociable and sticky, applies steady pressure in position, sizes value bets up, bluffs moderately.",tight:0.3,agg:0.6,bluff:0.1,chase:1.05,nutReq:1,think:800,math:true,valueSize:1.1},
 ];
 // Mouk as a bot: used only when the human picks a different identity in the player picker.
 const MOUK_PROF={name:"Mouk",blurb:"Head of IT at Future Secure AI; ex-Netflix games IT. Calls himself loose and a chaser, depending on the hour: early an organized, position-aware loose-TAG; later he widens ranges and chases draws at worse prices.",tight:0.32,agg:0.55,bluff:0.12,chase:1.0,nutReq:1,think:1000,lateShift:true};
@@ -576,7 +577,7 @@ function migrateRick(o){if(!o||typeof o!=="object")return o;
 // ===== Fixed 8-seat table + waitlist (replaces sit-out rotation) =====
 function profByName(n){return PROFILES.find(p=>p.name===n)||(G.custom||[]).find(p=>p.name===n)||null;}
 const DECLINE_REBUY={"Milton":0.5,"L":0.4,"Rich":0.3,"Todd":0.3,"Willy":0.25,"Ram":0.3,"Jamal":0.35};
-function tableInit(){migrateRick(G);{const rn=new Set((G.seats||[]).filter(s=>s&&s.remote).map(s=>s.remote.name));if(rn.size){if(G.table)G.table=G.table.map(n=>rn.has(n)?null:n);if(G.wait)G.wait=G.wait.filter(n=>!rn.has(n));}}if(G.table){const hi=G.table.indexOf(HERO());if(hi>=0)G.table[hi]=null;}if(G.wait)G.wait=G.wait.filter(n=>n!==HERO());if(G.bank)migrateRick(G.bank);if(G.meters)migrateRick(G.meters);if(!G.table){G.table=["Milton","David N","Rich","Todd","Rickey","Yum","Willy"];G.wait=["L","Ram","Jamal"];const hi=G.table.indexOf(HERO());if(hi>=0){G.table[hi]=G.wait.shift()||null;}G.wait=G.wait.filter(n=>n!==HERO());}G.wait=G.wait||[];G.custom=G.custom||[];G.leave=G.leave||[];if(HERO()!=="Mouk"&&PROFILES.includes(MOUK_PROF)&&!G.table.includes("Mouk")&&!G.wait.includes("Mouk"))G.wait.push("Mouk");}
+function tableInit(){migrateRick(G);{const rn=new Set((G.seats||[]).filter(s=>s&&s.remote).map(s=>s.remote.name));if(rn.size){if(G.table)G.table=G.table.map(n=>rn.has(n)?null:n);if(G.wait)G.wait=G.wait.filter(n=>!rn.has(n));}}if(G.table){const hi=G.table.indexOf(HERO());if(hi>=0)G.table[hi]=null;}if(G.wait)G.wait=G.wait.filter(n=>n!==HERO());if(G.bank)migrateRick(G.bank);if(G.meters)migrateRick(G.meters);if(!G.table){G.table=["Milton","David N","Rich","Todd","Rickey","Yum","Willy"];G.wait=["L","Ram","Jamal","Ben"];const hi=G.table.indexOf(HERO());if(hi>=0){G.table[hi]=G.wait.shift()||null;}G.wait=G.wait.filter(n=>n!==HERO());}G.wait=G.wait||[];if(G.table&&!G.table.includes("Ben")&&!G.wait.includes("Ben")&&HERO()!=="Ben")G.wait.push("Ben");G.custom=G.custom||[];G.leave=G.leave||[];if(HERO()!=="Mouk"&&PROFILES.includes(MOUK_PROF)&&!G.table.includes("Mouk")&&!G.wait.includes("Mouk"))G.wait.push("Mouk");}
 function seatTable(){tableInit();
   for(let k=0;k<7;k++){const n=G.table[k];if(n&&G.leave.includes(n)){G.table[k]=null;G.wait.push(n);L(`${n} leaves seat ${k+1} for the waitlist.`);}}G.leave=[];
   for(let k=0;k<7;k++){const seat=k+1,s=G.seats[seat];
@@ -646,7 +647,7 @@ function bankNets(){bankOf(HERO());return Object.entries(G.bank).map(([n,b])=>({
 const METERED=[HERO(),...PROFILES.map(p=>p.name)];
 function allNames(){return [HERO(),...PROFILES.map(p=>p.name).filter(n=>n!==HERO()),...(G.custom||[]).map(p=>p.name)];}
 const METER_SENS={"Milton":0.25,"L":0.6,"Rich":0.55,"Todd":0.6,"Willy":0.5,"Ram":0.8,"Yum":1,"Rickey":1.3,"David N":1.3,"Mouk":1};
-const DRINK_SENS={"Rich":0.7,"Ram":0.8,"Mouk":0.9,"L":0.6,"Jamal":0.65},TILT_SENS={"Jamal":0.45,"Rich":0.4,"Ram":0.6,"Mouk":0.8,"L":0.4};
+const DRINK_SENS={"Ben":1.0,"Rich":0.7,"Ram":0.8,"Mouk":0.9,"L":0.6,"Jamal":0.65},TILT_SENS={"Jamal":0.45,"Rich":0.4,"Ram":0.6,"Mouk":0.8,"L":0.4};
 const scaleLvl=(n,l,k)=>Math.min(3,Math.round(l*(((k==="d"?DRINK_SENS:k==="t"?TILT_SENS:{})[n])??METER_SENS[n]??1)));
 function clampMeters(o){const c=x=>Math.max(0,Math.min(9,Math.round(+x||0)));for(const k in o||{}){const m=o[k];if(m&&typeof m==="object"){m.drink=c(m.drink);m.tilt=c(m.tilt);}}return o;}
 function freshMeters(){const m={};for(const n of allNames())m[n]={drink:0,tilt:0,dealt:0};return m;}
@@ -798,7 +799,7 @@ function outlier(s){G.lb=G.lb&&G.lb.hand===G.handNo?G.lb:{hand:G.handNo};const k
 function brLoad(){if(G.brBase)return G.brBase;let o=null;try{o=JSON.parse(localStorage.getItem("plo5br")||"null");}catch(e){}G.brBase=(o&&typeof o==="object")?o:{};if(G.brBase.Ricky!==undefined&&G.brBase.Rickey===undefined){G.brBase.Rickey=G.brBase.Ricky;}if(G.brBase.Milty!==undefined&&G.brBase.Milton===undefined)G.brBase.Milton=G.brBase.Milty;if(G.brBase["Yum Yum"]!==undefined&&G.brBase.Yum===undefined)G.brBase.Yum=G.brBase["Yum Yum"];return G.brBase;}
 function brFold(){const B=brLoad();if(G.bank)for(const n in G.bank){const b=G.bank[n];if(b&&isFinite(b.stack-b.buyins))B[n]=(+B[n]||0)+(b.stack-b.buyins);}try{localStorage.setItem("plo5br",JSON.stringify(B));}catch(e){}}
 function brNet(n){const B=brLoad(),b=G.bank&&G.bank[n];return (+B[n]||0)+(b?b.stack-b.buyins:0);}
-const BR_SWING={"Rickey":1.4,"Todd":1.4,"David N":1.3,"Yum":0.8,"Ram":1.0},BR_DISC={"Willy":1,"Rich":1,"Milton":1,"L":1,"Jamal":1};
+const BR_SWING={"Ben":1.1,"Rickey":1.4,"Todd":1.4,"David N":1.3,"Yum":0.8,"Ram":1.0},BR_DISC={"Willy":1,"Rich":1,"Milton":1,"L":1,"Jamal":1};
 function brMods(n){const br=Math.max(-1,Math.min(1,brNet(n)/1000));const m=G.meters&&G.meters[n];let drunk=m?Math.min(1,m.drink/9):0;if(n==="Ram")drunk=Math.min(1,drunk/0.8);
   const sober=drunk<0.33,sw=BR_DISC[n]?(sober?0.6:1.0):(BR_SWING[n]??1.0);let loose=1,chase=0;
   if(br>0){let g=0.1*br+(sober?0:0.15*br*drunk);if(sober)g=Math.min(g,0.05);loose=1+g*sw;}
@@ -1225,7 +1226,7 @@ function overlapCheck(){const W=document.querySelector("#gTable");const pick=(se
     const ix=Math.min(A.r.right,B.r.right)-Math.max(A.r.left,B.r.left),iy=Math.min(A.r.bottom,B.r.bottom)-Math.max(A.r.top,B.r.top);if(ix>0.5&&iy>0.5)bad.push(A.lab+"×"+B.lab+" ("+ix.toFixed(0)+"x"+iy.toFixed(0)+")");}
   return {n:items.length,overlaps:bad,offscreen:off,vw,vh};}
 
-window.openHeroPicker=()=>{const names=["Mouk","Willy","Milton","David N","Rich","Todd","Yum","L","Rickey","Ram","Jamal"];$("heroBtns").innerHTML=names.map(n=>`<button class="sm" style="margin:3px;${n===HERO()?'background:var(--acc)':''}" onclick="setHero('${n}')">${n}</button>`).join("");if(!$("pHero").classList.contains("open"))tg("pHero");};
+window.openHeroPicker=()=>{const names=["Mouk","Willy","Milton","David N","Rich","Todd","Yum","L","Rickey","Ram","Jamal","Ben"];$("heroBtns").innerHTML=names.map(n=>`<button class="sm" style="margin:3px;${n===HERO()?'background:var(--acc)':''}" onclick="setHero('${n}')">${n}</button>`).join("");if(!$("pHero").classList.contains("open"))tg("pHero");};
 window.setHero=n=>{n=String(n||"").trim().slice(0,16).replace(/[<>&"'`]/g,"");if(!n)return;
   G.hero=n;try{localStorage.setItem("plo5hero",n);}catch(e){}{const k=PROFILES.indexOf(MOUK_PROF);if(n!=="Mouk"&&k<0)PROFILES.push(MOUK_PROF);if(n==="Mouk"&&k>=0)PROFILES.splice(k,1);if(typeof METERED!=="undefined"){METERED.length=0;METERED.push(n,...PROFILES.map(p=>p.name).filter(x=>x!==n));}}
   G.table=null;G.wait=null;G.leave=[];G.stats={};G.hk={};G.meters=freshMeters();G.session=[];G.history=[];
