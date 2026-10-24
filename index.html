@@ -707,7 +707,15 @@ function tiltGate(i,d){const s=G.seats[i];if(!s.prof||!G.meters||!G.meters[s.nam
     const outs=G.street>0&&G.board.length<5?quickOuts(s.hand,G.board):0;const chaserAdj=s.prof.name==="Yum"?(outs>=8?2:0.3):1;
     if(G.rngNext()<TILT_LIGHT[t]*sty*chaserAdj){L(`${s.name} is steaming…`);return ["raise",lg.maxTo];}}
   return d;}
-function botDecide(i){const s=G.seats[i];if(s&&s.name==="Empty"){const lg=legal(i);return lg.toCall>0?["fold"]:["check"];}if(s&&!s.isUser&&!s.remote&&steamOn(s.name)){const lg=legal(i);if(lg.canRaise)return ["raise",lg.maxTo];return lg.toCall>0?["call"]:["check"];}return tiltGate(i,botDecideVs(i));}
+function botDecide(i){const s=G.seats[i];if(s&&s.name==="Empty"){const lg=legal(i);return lg.toCall>0?["fold"]:["check"];}if(s&&!s.isUser&&!s.remote&&steamOn(s.name)){const lg=legal(i);if(lg.canRaise)return ["raise",lg.maxTo];return lg.toCall>0?["call"]:["check"];}return escCap(i,tiltGate(i,botDecideVs(i)));}
+// Escalation cap: limp/call preflop with small raises, cap re-raise wars, big bets only with strong hands.
+function escCap(i,d){const s=G.seats[i];if(!s||s.isUser||s.remote||d[0]!=="raise")return d;const lg=legal(i),r=G.raises||0,sk=strengthOf(s),nuts=sk==="nuts",strong=nuts||sk==="strong",pot=lg.pot+lg.toCall;
+  const passive=()=>lg.toCall>0?["call"]:["check"];
+  if(G.street===0){if(r>=1&&!(nuts&&r<2&&G.rngNext()<0.35))return passive();if(r===0&&!strong&&G.rngNext()<0.7)return passive();
+    const to=Math.min(lg.maxTo,Math.max(lg.minTo,Math.round(G.BB*(3+G.rngNext()*2))+(lg.toCall>G.BB?s.bet+lg.toCall:0)));return ["raise",to];}
+  if(!strong)return r===0&&G.rngNext()<0.2?["raise",Math.min(lg.maxTo,Math.max(lg.minTo,Math.round(s.bet+lg.toCall+0.5*pot)))]:passive();
+  if(r>=2&&!nuts)return passive();if(r>=3)return passive();
+  const f=nuts?(G.street===3?0.8:0.65):0.5,to=Math.min(lg.maxTo,Math.max(lg.minTo,Math.round(s.bet+lg.toCall+f*pot)));return ["raise",to];}
 function botDecideVs(i){const r=vsRule(i);if(!r)return botDecideBase(i);
   VS_WIDE=r.callWider||0;let d;try{d=botDecideBase(i);}finally{VS_WIDE=0;}
   const s=G.seats[i],lg=legal(i);
