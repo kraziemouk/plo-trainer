@@ -1,3 +1,11 @@
+# Live multiplayer (logged-in seats)
+
+- **Accounts:** Supabase Auth email + password. Account sheet: `https://mouk.ai/?login` (also 🌐 → 👤 Log in). Sign up, log in, log out, forgot password / set new password. Email confirmation is ON in this project.
+- **Seats are tied to the auth user id and enforced on the server.** A player creates a join *ticket* with `mp_ticket()` (authenticated only; anon has no EXECUTE). Only the room's host (row in `mp_rooms`) can redeem it with `mp_claim()`, which returns the verified user id. Tickets are single use.
+- **Private seat channel** `p-ROOM-<uid>` is a Realtime private channel: RLS on `realtime.messages` lets only that user and the room host join/send. Hole cards, actions, rebuys and leave go there; the public `room-ROOM` channel carries table state only (no hole cards until showdown). Spectators (anyone) can watch the public channel.
+- **Daily buy-in limit:** `mp_buyins` ledger per user per calendar day in America/Chicago (`mp_day()`); buy-ins + rebuys across all sessions are capped at 10,000/day inside `mp_claim()` (row-locked). Stacks are not capped during play.
+- **Host model:** the host's browser runs the engine, deals and plays the bots. Human seats never auto-act except the 30 s turn timeout (check, else fold). Leaving (button, sign-out, or 60 s disconnect) returns the seat to a bot at the next hand.
+
 # Online multiplayer (optional)
 
 Single-player is the default and works fully offline. Online play is opt-in and uses **Supabase Realtime** (Broadcast + Presence only — no database tables).

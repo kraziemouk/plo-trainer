@@ -249,10 +249,20 @@ Trials per cell: <select id="tblN"><option>1000</option><option selected>2500</o
 <p>Custom name: <input id="heroCustom" size="12" maxlength="16"> <button class="sm" onclick="setHero(heroCustom.value)">Use</button></p></div>
 <div id="pOnline" class="sheet small"><div class="sheethead"><b>Online game (optional)</b><button class="sm" onclick="tg('pOnline')">✕</button></div>
 <p class="note">Single-player works offline. Online play uses Supabase Realtime; nothing loads until you host or join.</p>
+<p><button id="acctBtn" class="sm" onclick="authShow()">👤 Log in</button> <span class="note">A seat at a live table needs an account. Anyone can watch.</span></p>
 <p><button onclick="mpUIHost()">Host online game</button></p>
-<p>Join: code <input id="mpCode" size="7" maxlength="6"> name <input id="mpName" size="10" maxlength="16"> <button onclick="mpUIJoin()">Join</button></p>
+<p>Room code <input id="mpCode" size="7" maxlength="6"> name <input id="mpName" size="10" maxlength="16"> buy-in <input id="mpBuy" type="number" min="1" max="10000" value="200" style="width:5.5em"> <button onclick="mpUIJoin()">Take a seat</button> <button class="sm" onclick="mpUIWatch()">Watch</button></p><p class="note">Live buy-ins and rebuys: up to 10,000 per account per day (resets midnight Central). Chips you win aren't capped.</p>
 <div id="mpOut"></div>
 <details><summary>Online settings</summary><p>Supabase URL <input id="mpUrl" style="width:100%"></p><p>Publishable / anon key <input id="mpKey" style="width:100%"></p><button class="sm" onclick="mpSaveCfg()">Save</button></details></div>
+<div id="pAuth" class="sheet small bsheet" role="dialog" aria-label="Account"><div class="sheethead"><b>Account</b><button class="sm" onclick="tg('pAuth')" aria-label="Close">✕</button></div>
+<div id="auIn"><p class="note">Log in to take a real seat in live games. Solo play never needs an account.</p>
+<label class="srow"><span>Email</span><input id="auEmail" type="email" autocomplete="email" inputmode="email" style="flex:1;min-width:0;font-size:16px;padding:8px"></label>
+<label class="srow"><span>Password</span><input id="auPass" type="password" autocomplete="current-password" style="flex:1;min-width:0;font-size:16px;padding:8px"></label>
+<p style="display:flex;gap:8px;flex-wrap:wrap"><button onclick="authUI('login')" style="flex:1;background:#27ae60">Log in</button><button onclick="authUI('signup')" style="flex:1">Sign up</button></p>
+<p><button class="sm" onclick="authUI('reset')">Forgot password?</button></p></div>
+<div id="auOut" style="display:none"><p>Logged in as <b id="auWho"></b></p><p><button onclick="authUI('logout')">Log out</button></p></div>
+<div id="auRec" style="display:none"><p>Choose a new password</p><label class="srow"><span>New password</span><input id="auNew" type="password" autocomplete="new-password" style="flex:1;min-width:0;font-size:16px;padding:8px"></label><p><button onclick="authUI('newpw')" style="background:#27ae60">Save password</button></p></div>
+<p id="auMsg" class="note" aria-live="polite"></p></div>
 <div id="pOpt" class="sheet small bsheet" role="dialog" aria-label="Settings"><div class="sheethead"><b>Settings</b><button class="sm" onclick="tg('pOpt')" aria-label="Close">✕</button></div><h3 class="shd">Sound</h3><p class="note" id="muteNote" style="display:none">Muted — tap 🔇 in the top bar to unmute.</p><label class="srow"><span>Volume</span><input type="range" id="gVol" min="0" max="100" step="5" value="80"></label><label class="srow"><span>Action sounds</span><input type="checkbox" id="gSfx" ></label><label class="srow"><span>Bots' voice lines (bot action sounds)</span><input type="checkbox" id="gVoice" ></label><h3 class="shd">Table</h3><label class="srow"><span>Show drink/tilt meters on seats</span><input type="checkbox" id="gSeatMeters" onchange="setSeatMeters(this.checked)"></label><label class="srow"><span>Four-color deck</span><input type="checkbox" id="gFourC" onchange="setFourC(this.checked)"></label><label class="srow"><span>Light theme</span><input type="checkbox" id="gLight" ></label><label class="srow"><span>Bot speed</span><select id="gSpeed"><option value="1" selected>Fast</option><option value="2">Normal</option><option value="0">Instant</option></select></label><h3 class="shd">Training</h3><label class="srow"><span>Auto-show odds/hints</span><input type="checkbox" id="gAutoOdds" onchange="G.autoOdds=this.checked;try{localStorage.setItem('plo5autoodds',this.checked?'1':'0')}catch(e){}"></label><label class="srow"><span>Weight opponents to loose range</span><input type="checkbox" id="gWeighted" checked></label><label class="srow"><span>Equity trials</span><select id="gIters"><option>800</option><option selected>2000</option><option>5000</option></select></label><h3 class="shd">Session</h3><p><button class="sm" onclick="openHeroPicker()">Change player (new session)</button> <button class="sm" onclick="if(confirm('Start a new session? You can pick who you play as.')){openHeroPicker();}">New session</button></p><label class="srow"><span>Keep tilt &amp; drink between page loads</span><input type="checkbox" id="gKeep" ></label></div><div id="optScrim" onclick="tg('pOpt')"></div>
 <script>// ==== migration: Milty -> Milton, Ricky -> Rickey (same players, renamed 2026-10-23) ====
 const migMilty=t=>typeof t==="string"?t.replace(/\bMilty\b/g,"Milton").replace(/\bRicky\b/g,"Rickey").replace(/Yum Yum/g,"Yum"):t; // Rick->Rickey handled by migrateRick
@@ -635,14 +645,14 @@ function potSlide(){if(typeof document==="undefined"||!document.querySelector||!
 function davidSteam(n){return steamOn(n);}
 function steamOn(n){const m=G.meters&&G.meters[n],u=STEAM[n];const on=!!u&&!!m&&m.drink>=u.drink&&m.tilt>=u.tilt;if(on&&G.bank&&G.bank[n]){G.bank[n].cap=3000;if(!G.bank[n].ship){G.bank[n].ship=1;try{L(`${n}: Ship it mode enabled 🥂`);}catch(e){}try{shipBanner(n);}catch(e){}}}return on;}
 function botRebuyAmt(n){if(davidSteam(n)){const b=G.bank&&G.bank[n];return b?remaining(b):G.MAXBI;}const r=G.bank&&G.bank[n]?remaining(G.bank[n]):G.MAXBI;return Math.min(r,G.START*rebuyMult(n));}
-function loadStacks(){G.seats.forEach((s,i)=>{const b=bankOf(s.name);steamOn(s.name);if(s.isUser||s.remote){s.stack=b.stack;return;}
+function loadStacks(){G.seats.forEach((s,i)=>{if(s.remote){const r=s.remote;r.stack=(r.stack||0)+(r.pending||0);r.pending=0;s.stack=r.stack;if(s.stack<G.BB){s.folded=true;s.sitout=true;}else s.sitout=false;return;}const b=bankOf(s.name);steamOn(s.name);if(s.isUser){s.stack=b.stack;return;}
     if(b.stack<G.BB){const a=addChips(b,botRebuyAmt(s.name));if(a>0){b.rebuys++;L(`${s.name} is busted and rebuys for ${a} (spent ${b.buyins}/${b.cap||G.MAXBI}).`);if(G.meters&&G.meters[s.name])G.meters[s.name].tilt=cap9(G.meters[s.name].tilt+1);}}
     else if(b.stack<0.5*G.START&&remaining(b)>0&&G.rngNext()<0.1){const a=addChips(b,G.START-b.stack);if(a>0){b.topups++;L(`${s.name} tops up ${a} (spent ${b.buyins}/${G.MAXBI}).`);}}
     s.stack=b.stack;});}
-function saveStacks(){for(const s of G.seats)bankOf(s.name).stack=s.stack;PH.set("plo5bank",G.bank);}
+function saveStacks(){for(const s of G.seats){if(s.remote){s.remote.stack=s.stack;continue;}bankOf(s.name).stack=s.stack;}PH.set("plo5bank",G.bank);}
 function mookRebuy(amt){const b=bankOf(HERO());const a=addChips(b,amt===undefined?G.START:amt);if(a>0){if(b.stack-a<G.BB)b.rebuys++;else b.topups++;}PH.set("plo5bank",G.bank);if(G.seats[0])G.seats[0].stack=b.stack;return a;}
 function newSession(){try{brFold();}catch(e){}G.sessionStart=Date.now();PH.set("plo5sessStart",G.sessionStart);G.bank=freshBank();PH.set("plo5bank",G.bank);for(const s of G.seats)s.net=0;}
-function bankNets(){bankOf(HERO());return Object.entries(G.bank).map(([n,b])=>({name:n,stack:b.stack,buyins:b.buyins,rebuys:b.rebuys,topups:b.topups||0,net:b.stack-b.buyins}));}
+function bankNets(){bankOf(HERO());const live=new Set(G.seats.filter(s=>s.remote).map(s=>s.name));return Object.entries(G.bank).filter(([n])=>!live.has(n)).map(([n,b])=>({name:n,stack:b.stack,buyins:b.buyins,rebuys:b.rebuys,topups:b.topups||0,net:b.stack-b.buyins})).concat(G.seats.filter(s=>s.remote).map(s=>({name:s.remote.name,stack:s.remote.stack+(s.remote.pending||0),buyins:s.remote.buyins,rebuys:0,topups:0,net:s.remote.stack-s.remote.buyins,live:true})));}
 // ===== Drink & tilt meters (Yum, David N) =====
 const METERED=[HERO(),...PROFILES.map(p=>p.name)];
 function allNames(){return [HERO(),...PROFILES.map(p=>p.name).filter(n=>n!==HERO()),...(G.custom||[]).map(p=>p.name)];}
@@ -1081,7 +1091,7 @@ function compactP(){return typeof window.matchMedia==="function"&&window.matchMe
 function applyOrient(){placeHud();const sh=typeof window.matchMedia==="function"&&window.matchMedia("(orientation: landscape) and (max-height: 500px)").matches;const p=typeof window.matchMedia==="function"&&window.matchMedia("(orientation: portrait)").matches;const S=sh?SEATPOS_S:p?SEATPOS_P:SEATPOS_L,B=sh?BETPOS_S:p?BETPOS_P:BETPOS_L;for(let i=0;i<8;i++){SEATPOS[i]=S[i];BETPOS[i]=B[i];}}
 if(document.getElementById("gKeep")){const k=document.getElementById("gKeep");k.checked=G.keep;k.onchange=e=>{G.keep=e.target.checked;saveMeters();};}
 if(document.getElementById("gAutoOdds"))document.getElementById("gAutoOdds").checked=!!G.autoOdds;
-window.tg=id=>{for(const x of ["drawer","pLog","pRep","pOpt","pHist","pOnline","pWait","pHero"])if(x!==id)$(x).classList.remove("open");$(id).classList.toggle("open");};
+window.tg=id=>{for(const x of ["drawer","pLog","pRep","pOpt","pHist","pOnline","pWait","pHero","pAuth"])if(x!==id)$(x).classList.remove("open");$(id).classList.toggle("open");};
 {const _d=dash;dash=function(){_d();const h=G.history[G.history.length-1];if(h)$("hudTog").innerHTML=`${HERO()} <b>${pct(h.eq)}</b> · W ${pct(h.win)} T ${pct(h.tie)} · vs ${h.opp} ▴`;};}
 G.autoOdds=false;try{G.autoOdds=localStorage.getItem("plo5autoodds")==="1";}catch(e){}
 {const _u=window.uAct;window.uAct=t=>{_u(t);if(G.autoOdds)$("hud").classList.add("open");else{const r=G.session[G.session.length-1];if(r){const el=$("hudToast");if(el){el.innerHTML=r.ok?`<span class="good">✔ matches hint</span>`:`<span class="bad">✘ hint: ${r.hint.toUpperCase()}</span>${r.loss?` ≈${r.loss.toFixed(0)}`:""} · tap Odds for why`;el.classList.add("show");clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove("show"),6000);}}}};}
@@ -1141,80 +1151,116 @@ window.doResume=()=>{if(!resumeState())return;renderTable();renderSession();rend
 
 // ===== Online multiplayer (opt-in; Supabase Realtime Broadcast + Presence; host-authoritative) =====
 const MP_CONFIG={url:"https://xqnuhdqawrgbliqfpfxa.supabase.co",key:"sb_publishable_r8cXvbZl3te8Nx4iBHaQSw_wg0_NmOy"}; // publishable/anon key (client-safe). Override via Online settings.
-const MP={role:null,code:null,tr:null,pub:null,priv:{},seatTok:{},timers:{},TURN_MS:30000,AWAY_MS:60000};
+const MP={role:null,code:null,tr:null,pub:null,priv:{},seatUid:{},seatTok:{},timers:{},TURN_MS:30000,AWAY_MS:60000};
 function mpCfg(){let o=null;try{o=JSON.parse(localStorage.getItem("plo5sb")||"null")}catch(e){}return {url:(o&&o.url)||MP_CONFIG.url,key:(o&&o.key)||MP_CONFIG.key};}
 function rid(n){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let s="";const r=(typeof crypto!=="undefined"&&crypto.getRandomValues)?crypto.getRandomValues(new Uint32Array(n)):Array.from({length:n},()=>Math.floor(Math.random()*4294967296));for(let i=0;i<n;i++)s+=a[r[i]%a.length];return s;}
 // Transport: Supabase (lazy CDN import) or an injected mock with the same shape.
 async function mpTransport(){if(MP.mock)return MP.mock;const c=mpCfg();if(!c.url||!c.key)throw new Error("Online settings missing (Supabase URL + key).");
-  const mod=await import("https://esm.sh/@supabase/supabase-js@2");const sb=mod.createClient(c.url,c.key);
-  return {channel(name,presKey){const ch=sb.channel(name,{config:{broadcast:{self:false,ack:false},presence:{key:presKey||""}}});
+  const sb=await sbc();
+  return {channel(name,presKey,priv){if(priv&&sb.realtime&&sb.realtime.setAuth)sb.realtime.setAuth();const ch=sb.channel(name,{config:{private:!!priv,broadcast:{self:false,ack:false},presence:{key:presKey||""}}});
     return {on(ev,cb){ch.on("broadcast",{event:ev},m=>cb(m.payload));return this;},onPresence(cb){ch.on("presence",{event:"sync"},()=>cb(ch.presenceState()));return this;},
       send(ev,p){return ch.send({type:"broadcast",event:ev,payload:p});},track(o){return ch.track(o);},
       subscribe(){return new Promise((res,rej)=>ch.subscribe(st=>{if(st==="SUBSCRIBED")res();else if(st==="CHANNEL_ERROR"||st==="TIMED_OUT")rej(new Error(st));}));},close(){return sb.removeChannel(ch);}};}};}
+// ---------- AUTH + API (Supabase Auth email/password; server-enforced seats, daily 10,000 buy-in ledger) ----------
+MP.DAY_CAP=10000;let SB=null;
+async function sbc(){if(MP.mock)return null;if(SB)return SB;const c=mpCfg();if(!c.url||!c.key)throw new Error("Online settings missing (Supabase URL + key).");
+  const mod=await import("https://esm.sh/@supabase/supabase-js@2");SB=mod.createClient(c.url,c.key,{auth:{persistSession:true,detectSessionInUrl:true}});
+  SB.auth.onAuthStateChange((ev,ses)=>{MP.user=ses&&ses.user||null;if(ev==="PASSWORD_RECOVERY"){MP.recovery=true;authOpen();}authRender();});return SB;}
+async function mpUser(){if(MP.mock)return MP.mockUser||null;const sb=await sbc();const {data}=await sb.auth.getSession();MP.user=data&&data.session&&data.session.user||null;return MP.user;}
+function mpApi(){if(MP.mock)return MP.mockApi;return {
+  async createRoom(code){const {error}=await SB.rpc("mp_create_room",{p_code:code});if(error)throw new Error(error.message);},
+  async ticket(room,kind,name,amount){const {data,error}=await SB.rpc("mp_ticket",{p_room:room,p_kind:kind,p_name:name,p_amount:amount});if(error)throw new Error(error.message);return data;},
+  async claim(id){const {data,error}=await SB.rpc("mp_claim",{p_ticket:id});if(error)throw new Error(error.message);return data&&data[0];},
+  async today(){const {data,error}=await SB.rpc("mp_today");if(error)throw new Error(error.message);return data||0;}};}
 // ---------- HOST ----------
 function publicState(){return {handNo:G.handNo,button:G.button,board:G.board,street:G.street,pot:potTotal(),toAct:G.handOver?-1:G.toAct,curBet:G.curBet,over:G.handOver,result:G.result,
   log:G.log.slice(-12),meters:G.meters,
-  seats:G.seats.map((s,i)=>({name:s.name,stack:s.stack,bet:s.bet,total:s.total,folded:s.folded,allin:s.allin,human:!!(s.isUser||s.remote),away:!!(s.remote&&s.remote.away),
+  seats:G.seats.map((s,i)=>({name:s.name,stack:s.stack,bet:s.bet,total:s.total,folded:s.folded,allin:s.allin,human:!!(s.isUser||s.remote),away:!!(s.remote&&s.remote.away),uid:s.remote?s.remote.uid:(i===0?MP.hostUid||null:null),
     shown:G.handOver&&!s.folded&&G.seats.filter(x=>!x.folded).length>1?s.hand:null})),
   legal:(!G.handOver&&G.seats[G.toAct]&&G.seats[G.toAct].remote)?legal(G.toAct):null};}
 function mpTick(){if(MP.role!=="host"||!MP.pub)return;MP.pub.send("state",publicState());}
-function mpSendCards(i){const s=G.seats[i];if(!s.remote)return;const ch=MP.priv[s.remote.token];if(ch)ch.send("cards",{handNo:G.handNo,hand:s.hand});}
-function mpNewHandHook(){if(MP.role!=="host")return;for(let i=1;i<8;i++){const s=G.seats[i];if(s.remote&&s.remote.away&&Date.now()-s.remote.awayAt>MP.AWAY_MS){mpLog(`${s.remote.name} left — seat returns to a bot.`);delete MP.seatTok[s.remote.token];delete s.remote;}}}
+function mpSendCards(i){const s=G.seats[i];if(!s.remote)return;const ch=MP.priv[s.remote.uid];if(ch)ch.send("cards",{handNo:G.handNo,hand:s.hand});}
+function mpNewHandHook(){if(MP.role!=="host")return;for(let i=1;i<8;i++){const s=G.seats[i],r=s.remote;if(!r)continue;
+  if(r.leaving||(r.away&&Date.now()-r.awayAt>MP.AWAY_MS)){mpLog(`${r.name} left — seat returns to a bot.`);delete MP.seatUid[r.uid];const ch=MP.priv[r.uid];if(ch){try{ch.send("left",{})}catch(e){}try{ch.close()}catch(e){}delete MP.priv[r.uid];}delete s.remote;}}}
 function mpAfterDeal(){if(MP.role!=="host")return;for(let i=1;i<8;i++)mpSendCards(i);mpTick();}
 function mpLog(m){L(m);}
 function mpAwait(i){const s=G.seats[i];clearTimeout(MP.timers[i]);mpTick();
-  MP.timers[i]=setTimeout(()=>{if(G.toAct===i&&!G.handOver&&G.seats[i].remote){L(`${s.name} timed out.`);gAct(i,"fold");gAdvance();mpTick();}},s.remote.away?3000:MP.TURN_MS);}
-async function mpHost(){const tr=await mpTransport();MP.tr=tr;MP.role="host";MP.code=rid(6);
+  MP.timers[i]=setTimeout(()=>{if(G.toAct===i&&!G.handOver&&G.seats[i].remote){const lg=legal(i);L(`${s.name} timed out.`);gAct(i,lg.toCall>0?"fold":"check");gAdvance();mpTick();}},s.remote.away?3000:MP.TURN_MS);}
+async function mpOnPriv(uid,ev,p){const seat=MP.seatUid[uid];if(seat===undefined)return;const s=G.seats[seat],r=s.remote;if(!r||r.uid!==uid)return;
+  if(ev==="intent"){if(G.handOver||G.toAct!==seat)return;const ok=["fold","check","call","raise","allin"];if(!ok.includes(p.type))return;clearTimeout(MP.timers[seat]);
+    const lg=legal(seat);if(p.type==="allin")gAct(seat,"raise",lg.maxTo);else gAct(seat,p.type,+p.to||0);gAdvance();mpTick();}
+  else if(ev==="rebuy"){let c;try{c=await MP.api.claim(p.ticket)}catch(e){MP.priv[uid].send("note",{msg:"Rebuy refused: "+e.message});return;}
+    if(!c||c.user_id!==uid||c.kind!=="rebuy")return;if(c.granted>0){r.pending=(r.pending||0)+c.granted;r.buyins+=c.granted;L(`${r.name} rebuys ${c.granted} (today ${c.used_today}/${MP.DAY_CAP}).`);}
+    MP.priv[uid].send("note",{msg:c.granted>0?`Rebuy ${c.granted} — added from next hand. Today ${c.used_today}/${MP.DAY_CAP}.`:`Daily limit reached (${MP.DAY_CAP}/day, resets midnight Central).`,today:c.used_today});
+    if(G.handOver&&r.pending){s.stack+=r.pending;r.stack=s.stack;r.pending=0;}mpTick();}
+  else if(ev==="leave"){r.leaving=true;L(`${r.name} is leaving after this hand.`);if(G.toAct===seat&&!G.handOver){const lg=legal(seat);gAct(seat,lg.toCall>0?"fold":"check");gAdvance();}if(G.handOver){mpNewHandHook();try{seatTable();loadStacks();renderTable();}catch(e){}}mpTick();}
+  else if(ev==="hello"){r.away=false;mpSendCards(seat);mpTick();}}
+async function mpHost(){const u=await mpUser();if(!u)throw new Error("Log in first — live seats need an account.");MP.hostUid=u.id;
+  if(!G.seats||G.seats.length<8)gInit();const tr=await mpTransport();MP.tr=tr;MP.api=mpApi();MP.role="host";MP.code=rid(6);MP.seatUid={};await MP.api.createRoom(MP.code);
   const pub=tr.channel("room-"+MP.code,"host");MP.pub=pub;
-  pub.on("join",async p=>{if(!p||!p.req||!p.name)return;
-      const free=[1,2,3,4,5,6,7].filter(i=>!G.seats[i].remote);const token=rid(16),name=String(p.name).slice(0,16).replace(/[<>&"']/g,"");
-      const seat=free.length?free[0]:-1;if(seat>0){G.seats[seat].remote={token,name,away:false};MP.seatTok[token]=seat;} // reserve synchronously
-      const ack=tr.channel("room-"+MP.code+"-"+p.req);await ack.subscribe();if(seat<0){ack.send("ack",{error:"Table full"});return;}
-      const priv=tr.channel("room-"+MP.code+"-"+token);await priv.subscribe();MP.priv[token]=priv;L(`${name} joins seat ${seat} (replaces a bot from next hand).`);
-      ack.send("ack",{seat,token,code:MP.code});setTimeout(()=>{try{ack.close()}catch(e){}},2000);mpTick();})
-   .on("rejoin",p=>{const seat=MP.seatTok[p&&p.token];if(seat===undefined)return;const r=G.seats[seat].remote;if(!r)return;r.away=false;mpSendCards(seat);mpTick();})
-   .on("intent",p=>{const seat=MP.seatTok[p&&p.token];if(seat===undefined)return;if(G.handOver||G.toAct!==seat||!G.seats[seat].remote)return;
-      const ok=["fold","check","call","raise","allin"];if(!ok.includes(p.type))return;clearTimeout(MP.timers[seat]);
-      const lg=legal(seat);if(p.type==="allin")gAct(seat,"raise",lg.maxTo);else gAct(seat,p.type,+p.to||0);gAdvance();mpTick();})
-   .onPresence(st=>{const here=new Set(Object.keys(st));for(let i=1;i<8;i++){const r=G.seats[i].remote;if(!r)continue;if(!here.has(r.token)&&!r.away){r.away=true;r.awayAt=Date.now();L(`${r.name} disconnected.`);if(G.toAct===i&&!G.handOver)mpAwait(i);}else if(here.has(r.token)&&r.away){r.away=false;}}mpTick();});
+  pub.on("join",async p=>{if(!p||!p.ticket)return;let c;try{c=await MP.api.claim(p.ticket)}catch(e){return;}if(!c||c.kind!=="join")return;const uid=c.user_id;
+      const name=String(c.name||"Player").slice(0,16).replace(/[<>&"']/g,"");let seat=MP.seatUid[uid];
+      if(seat===undefined){if(uid===MP.hostUid)return;const free=[1,2,3,4,5,6,7].filter(i=>!G.seats[i].remote);seat=free.length?free[0]:-1;
+        if(seat>0){G.seats[seat].remote={uid,name,away:false,stack:0,pending:c.granted,buyins:c.granted};MP.seatUid[uid]=seat;}} // reserve synchronously
+      else{const r=G.seats[seat].remote;r.away=false;r.leaving=false;if(c.granted>0){r.pending=(r.pending||0)+c.granted;r.buyins+=c.granted;}}
+      let priv=MP.priv[uid];if(!priv){priv=tr.channel("p-"+MP.code+"-"+uid,null,true);for(const ev of ["intent","rebuy","leave","hello"])priv.on(ev,q=>mpOnPriv(uid,ev,q||{}));await priv.subscribe();MP.priv[uid]=priv;}
+      if(seat<0){priv.send("ack",{error:"Table full"});return;}
+      L(`${name} sits in seat ${seat} with ${c.granted} (today ${c.used_today}/${MP.DAY_CAP}).`);
+      priv.send("ack",{seat,code:MP.code,granted:c.granted,today:c.used_today});mpSendCards(seat);mpTick();})
+   .onPresence(st=>{const here=new Set(Object.keys(st));for(let i=1;i<8;i++){const r=G.seats[i].remote;if(!r)continue;if(!here.has(r.uid)&&!r.away){r.away=true;r.awayAt=Date.now();L(`${r.name} disconnected.`);if(G.toAct===i&&!G.handOver)mpAwait(i);}else if(here.has(r.uid)&&r.away){r.away=false;}}mpTick();});
   await pub.subscribe();await pub.track({role:"host"});
   return {code:MP.code,link:(typeof location!=="undefined"?location.origin+location.pathname:"")+"?room="+MP.code};}
-// ---------- CLIENT ----------
-function mpClient(tr,code,name,onState,onCards,savedToken){const C={seat:null,token:savedToken||null,state:null,hand:null,code};
-  const pub=tr.channel("room-"+code,null);C.pub=pub;
-  C.ready=(async()=>{pub.on("state",s=>{C.state=s;onState&&onState(C);});
-    if(!C.token){const req=rid(16);const ack=tr.channel("room-"+code+"-"+req);
-      const got=new Promise((res,rej)=>{ack.on("ack",a=>a.error?rej(new Error(a.error)):res(a));});await ack.subscribe();await pub.subscribe();
-      pub.send("join",{name,req});const a=await got;C.seat=a.seat;C.token=a.token;try{ack.close()}catch(e){}}
-    else await pub.subscribe();
-    const priv=tr.channel("room-"+code+"-"+C.token);priv.on("cards",c=>{C.hand=c.hand;C.handNo=c.handNo;onCards&&onCards(C);});await priv.subscribe();
-    await pub.track({token:C.token});
-    // re-key presence to the seat token so the host can see who is here
-    if(savedToken)pub.send("rejoin",{token:C.token});return C;})();
-  C.act=(type,to)=>pub.send("intent",{token:C.token,type,to});
+// ---------- CLIENT (logged-in player) / SPECTATOR (anyone) ----------
+function mpClient(tr,code,name,onState,onCards,opts){opts=opts||{};const C={seat:null,state:null,hand:null,code,name,uid:opts.uid||null,watch:!!opts.watch,api:opts.api};
+  const pub=tr.channel("room-"+code,C.uid||null);C.pub=pub;
+  C.ready=(async()=>{pub.on("state",s=>{C.state=s;if(C.uid&&s.seats){const k=s.seats.findIndex(x=>x.uid===C.uid);if(k>0)C.seat=k;}onState&&onState(C);});await pub.subscribe();
+    if(C.watch)return C;
+    const priv=tr.channel("p-"+code+"-"+C.uid,null,true);C.priv=priv;
+    priv.on("cards",c=>{C.hand=c.hand;C.handNo=c.handNo;onCards&&onCards(C);}).on("note",n=>{C.note=n.msg;if(n.today!==undefined)C.today=n.today;onState&&onState(C);}).on("left",()=>{C.seat=null;C.left=true;onState&&onState(C);});
+    const got=new Promise((res,rej)=>{priv.on("ack",a=>a.error?rej(new Error(a.error)):res(a));});await priv.subscribe();
+    const t=await C.api.ticket(code,"join",name,Math.max(1,Math.min(MP.DAY_CAP,Math.round(opts.buyin||200))));pub.send("join",{ticket:t});
+    const a=await got;C.seat=a.seat;C.granted=a.granted;C.today=a.today;await pub.track({uid:C.uid});return C;})();
+  C.act=(type,to)=>C.priv.send("intent",{type,to});
+  C.rebuy=async amt=>{const t=await C.api.ticket(code,"rebuy",name,Math.max(1,Math.min(MP.DAY_CAP,Math.round(amt))));C.priv.send("rebuy",{ticket:t});};
+  C.leave=()=>{C.priv&&C.priv.send("leave",{});};
   return C;}
 // ---------- Browser UI glue ----------
 let MPC=null;
-function mpClientRender(C){const s=C.state;if(!s)return;if(C.seat===null&&C.token){}
-  const me=C.seat===null?(s.seats.findIndex(x=>x.human&&x.name===C.name)):C.seat;if(C.seat===null&&me>0)C.seat=me;
-  const rot=i=>(i+C.seat)%8;
-  const seats=[0,1,2,3,4,5,6,7].map(d=>{const i=rot(d),x=s.seats[i];return {name:x.name+(x.away?" (away)":""),stack:x.stack,bet:x.bet,total:x.total,folded:x.folded,allin:x.allin,isUser:i===C.seat,hand:i===C.seat&&C.hand&&C.handNo===s.handNo?C.hand:(x.shown||[-1,-1,-1,-1,-1])};});
+function mpClientRender(C){const s=C.state;if(!s)return;const me=C.seat||0;
+  const rot=i=>(i+me)%8;
+  const seats=[0,1,2,3,4,5,6,7].map(d=>{const i=rot(d),x=s.seats[i];return {name:x.name+(x.away?" (away)":""),stack:x.stack,bet:x.bet,total:x.total,folded:x.folded,allin:x.allin,isUser:C.seat!==null&&i===C.seat,hand:C.seat!==null&&i===C.seat&&C.hand&&C.handNo===s.handNo?C.hand:(x.shown||[-1,-1,-1,-1,-1])};});
   G.meters=clampMeters(s.meters||G.meters);
-  $("gTable").innerHTML=tableHTML({seats,board:s.board,button:(s.button-C.seat+8)%8,pot:s.pot,toAct:s.toAct<0?-1:(s.toAct-C.seat+8)%8,thinking:-1,revealAll:false,label:s.over?s.result:STREETS[s.street]});
-  $("gInfo").innerHTML=`Online room <b>${C.code}</b> · seat ${C.seat} · hand #${s.handNo}`;
-  if(s.toAct===C.seat&&s.legal){const lg=s.legal;$("gCtl").innerHTML=`<div class="abar"><span class="tocall">To call <b>${lg.toCall}</b> · Pot <b>${lg.pot}</b></span>`+(lg.toCall>0?`<button class="fold" onclick="MPC.act('fold')">Fold</button><button onclick="MPC.act('call')">Call ${lg.toCall}</button>`:`<button onclick="MPC.act('check')">Check</button>`)+
+  $("gTable").innerHTML=tableHTML({seats,board:s.board,button:(s.button-me+8)%8,pot:s.pot,toAct:s.toAct<0?-1:(s.toAct-me+8)%8,thinking:-1,revealAll:false,label:s.over?s.result:STREETS[s.street]});
+  $("gInfo").innerHTML=`Online room <b>${C.code}</b> · ${C.seat===null?"watching":"seat "+C.seat} · hand #${s.handNo}`+(C.today!==undefined?` · bought in today ${C.today}/${MP.DAY_CAP}`:"")+(C.note?` · ${C.note}`:"");
+  if(C.seat!==null&&s.toAct===C.seat&&s.legal){const lg=s.legal;$("gCtl").innerHTML=`<div class="abar"><span class="tocall">To call <b>${lg.toCall}</b> · Pot <b>${lg.pot}</b></span>`+(lg.toCall>0?`<button class="fold" onclick="MPC.act('fold')">Fold</button><button onclick="MPC.act('call')">Call ${lg.toCall}</button>`:`<button onclick="MPC.act('check')">Check</button>`)+
     (lg.canRaise?`<span class="sizer"><button class="q" onclick="setAmt(${lg.minTo})">Min</button><button class="q" onclick="setAmt(${lg.maxTo})">Pot</button><input type="range" id="gAmt" min="${lg.minTo}" max="${lg.maxTo}" value="${lg.minTo}" oninput="gAmtL.textContent=this.value"><span id="gAmtL">${lg.minTo}</span><button class="raise" onclick="MPC.act('raise',+gAmt.value)">Raise to</button></span>`:"")+`</div>`;}
-  else $("gCtl").innerHTML=`<div class="abar"><span class="tocall">${s.over?s.result+" — waiting for host to deal":"Waiting for "+(s.seats[s.toAct]||{}).name+"…"}</span></div>`;
-  const mine=C.hand&&C.handNo===s.handNo&&!s.seats[C.seat].folded;if(mine&&s.board.length!==C.lastEqB){C.lastEqB=s.board.length;const n=s.seats.filter((x,i)=>i!==C.seat&&!x.folded).length;
+  else $("gCtl").innerHTML=`<div class="abar"><span class="tocall">${C.seat===null?(C.left?"You left the table. ":"Watching — log in to take a seat. "):""}${s.over?s.result+" — waiting for host to deal":"Waiting for "+((s.seats[s.toAct]||{}).name||"…")+"…"}</span>`+(C.seat!==null?`<button class="sm" onclick="mpUIRebuy()">Rebuy</button><button class="sm" onclick="MPC.leave()">Leave seat</button>`:"")+`</div>`;
+  const mine=C.seat!==null&&C.hand&&C.handNo===s.handNo&&!s.seats[C.seat].folded;if(mine&&s.board.length!==C.lastEqB){C.lastEqB=s.board.length;const n=s.seats.filter((x,i)=>i!==C.seat&&!x.folded).length;
     const e=n?equity(C.hand,s.board,n,800):1;$("hudTog").innerHTML=`My equity <b>${pct(e)}</b> vs ${n} ▴`;$("dash").innerHTML=`<h3>My odds · ${STREETS[s.street]}</h3><div class="big">${pct(e)}</div><div>vs ${n} active · fair share ${pct(1/(n+1))}</div><p class="note">Only your own cards are used. Hints are host-only.</p>`;}}
-window.mpUIHost=async()=>{try{const r=await mpHost();$("mpOut").innerHTML=`Room <b>${r.code}</b> — share: <input readonly value="${r.link}" style="width:100%" onclick="this.select()"><p class="note">Joiners take an empty seat from the next hand. Empty seats stay bots.</p>`;
-  const st=G.ui.street,en=G.ui.end;G.ui.street=function(){st();mpTick();};G.ui.end=function(){en();mpTick();};mpTick();}catch(e){$("mpOut").textContent="Couldn't host: "+e.message;}};
-window.mpUIJoin=async()=>{const code=$("mpCode").value.trim().toUpperCase(),name=$("mpName").value.trim()||"Guest";let saved=null;try{saved=JSON.parse(localStorage.getItem("plo5mp")||"null")}catch(e){}
-  const tok=saved&&saved.code===code?saved.token:null;
-  try{const tr=await mpTransport();MP.role="client";MPC=mpClient(tr,code,name,mpClientRender,mpClientRender,tok);MPC.name=name;if(tok)MPC.seat=saved.seat;await MPC.ready;
-    localStorage.setItem("plo5mp",JSON.stringify({code,token:MPC.token,seat:MPC.seat,name}));$("mpOut").innerHTML=`Joined room <b>${code}</b> as ${name} (seat ${MPC.seat}).`;tg("pOnline");}
+window.mpUIHost=async()=>{try{const r=await mpHost();$("mpOut").innerHTML=`Room <b>${r.code}</b> — share: <input readonly value="${r.link}" style="width:100%" onclick="this.select()"><p class="note">Logged-in players take an empty seat; empty seats stay bots.</p>`;
+  const st=G.ui.street,en=G.ui.end;G.ui.street=function(){st();mpTick();};G.ui.end=function(){en();mpTick();};mpTick();}catch(e){$("mpOut").textContent="Couldn't host: "+e.message;if(/Log in/.test(e.message))authOpen();}};
+window.mpUIJoin=async()=>{const code=$("mpCode").value.trim().toUpperCase();
+  try{const u=await mpUser();if(!u){$("mpOut").textContent="Log in to take a seat (or Watch without one).";authOpen();return;}
+    const name=$("mpName").value.trim()||(u.email||"Player").split("@")[0],buyin=+($("mpBuy")&&$("mpBuy").value)||200;
+    const tr=await mpTransport();MP.role="client";MPC=mpClient(tr,code,name,mpClientRender,mpClientRender,{uid:u.id,api:mpApi(),buyin});await MPC.ready;
+    $("mpOut").innerHTML=`Joined room <b>${code}</b> as ${name} (seat ${MPC.seat}, bought in ${MPC.granted}; today ${MPC.today}/${MP.DAY_CAP}).`;tg("pOnline");}
   catch(e){$("mpOut").textContent="Couldn't join: "+e.message;}};
+window.mpUIWatch=async()=>{const code=$("mpCode").value.trim().toUpperCase();try{const tr=await mpTransport();MP.role="client";MPC=mpClient(tr,code,"",mpClientRender,mpClientRender,{watch:true});await MPC.ready;$("mpOut").innerHTML=`Watching room <b>${code}</b> (no hole cards).`;tg("pOnline");}catch(e){$("mpOut").textContent="Couldn't watch: "+e.message;}};
+window.mpUIRebuy=async()=>{const a=+prompt(`Rebuy amount (daily limit ${MP.DAY_CAP} total, resets midnight Central)`,"200");if(!a||!MPC)return;try{await MPC.rebuy(a);}catch(e){MPC.note="Rebuy failed: "+e.message;mpClientRender(MPC);}};
 window.mpSaveCfg=()=>{localStorage.setItem("plo5sb",JSON.stringify({url:$("mpUrl").value.trim(),key:$("mpKey").value.trim()}));$("mpOut").textContent="Saved online settings.";};
+// ---------- Login page (sheet; open with ?login) ----------
+function authOpen(){const e=$("pAuth");if(e&&!e.classList.contains("open"))tg("pAuth");authRender();}
+function authMsg(m){$("auMsg").textContent=m||"";}
+function authRender(){const e=$("auIn"),o=$("auOut"),r=$("auRec");if(!e)return;const u=MP.user;e.style.display=u||MP.recovery?"none":"";o.style.display=u&&!MP.recovery?"":"none";r.style.display=MP.recovery?"":"none";if(u)$("auWho").textContent=u.email||"";const b=$("acctBtn");if(b)b.textContent=u?"👤 "+(u.email||"").split("@")[0]:"👤 Log in";}
+window.authUI=async(act)=>{authMsg("…");try{const sb=await sbc(),em=$("auEmail").value.trim(),pw=$("auPass").value;let r;
+  if(act==="login"){r=await sb.auth.signInWithPassword({email:em,password:pw});if(r.error)throw r.error;authMsg("Logged in.");}
+  else if(act==="signup"){if(pw.length<8)throw new Error("Use at least 8 characters.");r=await sb.auth.signUp({email:em,password:pw,options:{emailRedirectTo:location.origin+"/?login"}});if(r.error)throw r.error;authMsg(r.data.session?"Account created — you're logged in.":"Check your email to confirm your account, then log in.");}
+  else if(act==="reset"){if(!em)throw new Error("Enter your email first.");r=await sb.auth.resetPasswordForEmail(em,{redirectTo:location.origin+"/?login"});if(r.error)throw r.error;authMsg("If that email has an account, a reset link is on its way.");}
+  else if(act==="newpw"){const np=$("auNew").value;if(np.length<8)throw new Error("Use at least 8 characters.");r=await sb.auth.updateUser({password:np});if(r.error)throw r.error;MP.recovery=false;authMsg("Password updated.");}
+  else if(act==="logout"){if(MPC&&MPC.leave)try{MPC.leave()}catch(e){}await sb.auth.signOut();MP.user=null;authMsg("Logged out.");}
+  await mpUser();authRender();}catch(e){authMsg(e.message||String(e));}};
+window.authShow=async()=>{authOpen();try{await mpUser();authRender();}catch(e){authMsg(e.message);}};
+if(typeof location!=="undefined"){const lq=/[?&]login\b/.test(location.search)||/type=recovery|access_token/.test(location.hash);if(lq)setTimeout(()=>authShow(),60);else if(/room=/.test(location.search))setTimeout(()=>{mpUser().then(authRender).catch(()=>{})},60);}
 if(typeof location!=="undefined"&&location.search){const m=location.search.match(/room=([A-Z0-9]{6})/i);if(m)setTimeout(()=>{$("mpCode").value=m[1].toUpperCase();tg("pOnline");},50);}
 
 function meterBtns(n){const m=G.meters&&G.meters[n];if(!m)return"";return `<span class="meters"><button class="mt" title="Drinks (tap +1, wraps at 9)" onclick="event.stopPropagation();bump('${n}','drink');renderWait()">🥂<i>${m.drink}</i></button><button class="mt crack" title="Tilt (tap +1, wraps at 9)" onclick="event.stopPropagation();bump('${n}','tilt');renderWait()">🫏<i>${m.tilt}</i></button></span>`;}
