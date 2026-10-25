@@ -12,8 +12,8 @@ Deno.serve(async (req) => {
   let b: any = {}; try { b = await req.json(); } catch (_) { /* empty */ }
   const op = String(b.op || "state"), id = String(b.table || "main").slice(0, 40);
   if (op === "lobby") { const { data } = await admin.from("mp_live_pub").select("id,name,humans,status,permanent").order("permanent", { ascending: false }); return J({ tables: data || [] }); }
-  const user = ["join", "act", "rebuy", "leave", "beat"].includes(op) ? await userOf(req) : (req.headers.get("authorization") ? await userOf(req) : null);
-  if (["join", "act", "rebuy", "leave"].includes(op) && !user) return J({ error: "Log in to take a seat." }, 401);
+  const user = ["join", "act", "rebuy", "leave", "beat", "show"].includes(op) ? await userOf(req) : (req.headers.get("authorization") ? await userOf(req) : null);
+  if (["join", "act", "rebuy", "leave", "show"].includes(op) && !user) return J({ error: "Log in to take a seat." }, 401);
   let charge: any = null;
   if (op === "join" || op === "rebuy") { const amt = Math.max(1, Math.min(C.DAY_CAP, Math.round(+b.amount || 200)));
     const { data, error } = await admin.rpc("mp_charge", { p_uid: user!.id, p_amount: amt, p_room: id }); if (error) return J({ error: error.message }, 500); charge = data[0];
@@ -31,6 +31,7 @@ Deno.serve(async (req) => {
     else if (op === "rebuy") res = C.apply(E, live, { type: "rebuy", uid, granted: charge.granted, used: charge.used_today }, now);
     else if (op === "act") res = C.apply(E, live, { type: "act", uid, act: b.act, to: b.to }, now);
     else if (op === "leave") res = C.apply(E, live, { type: "leave", uid }, now);
+    else if (op === "show") res = C.apply(E, live, { type: "show", uid }, now);
     else if (uid) C.apply(E, live, { type: "beat", uid }, now);
     C.step(E, live, now);
     const st = C.save(E, live); const pub = C.publicState(E, live, id, row.name);

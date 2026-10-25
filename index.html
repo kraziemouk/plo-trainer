@@ -81,7 +81,7 @@ button.sm{padding:4px 9px;font-size:12px;background:#555;margin:0}button.sm.deal
 @keyframes cflip{0%{transform:perspective(400px) rotateY(90deg);filter:brightness(.3) hue-rotate(200deg)}100%{transform:perspective(400px) rotateY(0)}}
 @media (prefers-reduced-motion:reduce){.pc.anim-deal,.pc.anim-flip{animation:none!important}}
 .abar.act3.endbar .tuslot{flex:1 1 0;min-height:var(--act-h);visibility:hidden}.abar.act3.endbar .b-deal{background:#27ae60}.abar.act3.endbar .topup{background:#d4a017;color:#1a1a1a;min-width:0}.abar.act3.endbar .b-replay{background:#5a6573;color:#fff}
-.street:has(.winstrip){display:block!important;opacity:1}.winstrip{display:inline-block;background:#000b;color:#ffd54a;font-weight:700;border:1px solid #ffd54a88;border-radius:14px;padding:3px 12px;font-size:14px;animation:winin .3s ease-out}
+.street:has(.winstrip){display:block!important;opacity:1}.felt.hl .pc[data-c]:not([data-w]){animation:hldim 3.2s ease forwards}.felt.hl .pc[data-w]{box-shadow:0 0 0 3px #ffd54a,0 0 12px #ffd54aaa;animation:hlpop .4s ease-out}@keyframes hldim{0%{opacity:1}12%{opacity:.28}78%{opacity:.28}100%{opacity:1}}@keyframes hlpop{0%{transform:translateY(0)}50%{transform:translateY(-6px)}100%{transform:translateY(0)}}@media (prefers-reduced-motion:reduce){.felt.hl .pc[data-c]:not([data-w]){animation:none;opacity:.5}.felt.hl .pc[data-w]{animation:none}}.winstrip{display:inline-block;background:#000b;color:#ffd54a;font-weight:700;border:1px solid #ffd54a88;border-radius:14px;padding:3px 12px;font-size:14px;animation:winin .3s ease-out}
 @keyframes winin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
 .potchip{position:fixed;width:18px;height:18px;border-radius:50%;background:radial-gradient(circle,#fff 0 25%,#d32f2f 26% 60%,#fff 61% 68%,#d32f2f 69%);z-index:40;pointer-events:none}
 #gTable .seatT .meters{z-index:8;pointer-events:auto}#gTable .mt{touch-action:manipulation;pointer-events:auto;-webkit-tap-highlight-color:transparent}#gTable .mt::before{content:"";position:absolute;inset:calc((100% - 34px)/2)}
@@ -214,9 +214,28 @@ body:not(.light){--bg:var(--page)}body.app{background:var(--page)}
 @media (orientation:landscape) and (max-height:500px){.center .board .pc{width:min(var(--board-w),8cqw);height:min(var(--board-h),11.2cqw)}.seatT.me .hcards .pc{width:min(var(--hero-w),9cqw);height:min(var(--hero-h),12.5cqw)}}
 @media (orientation:portrait) and (max-height:700px){.bet{transform:translate(-50%,-50%) scale(.8)}.center .board .pc{width:min(var(--board-w),12cqw);height:min(var(--board-h),16.9cqw)}}
 @media (orientation:landscape) and (max-width:700px){.bet{transform:translate(-50%,-50%) scale(.8)}}
+#entry{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;background:radial-gradient(ellipse at center,#1f6b42 0%,#154d30 55%,#0b2318 100%);overflow:auto}
+#entry.hide{display:none}#entry .ebox{width:min(420px,100%);background:#0d1712e6;border:1px solid #ffffff22;border-radius:18px;padding:20px 18px;box-shadow:0 10px 40px #0009;color:#eee;text-align:center}
+#entry .emono{font-family:serif;font-size:42px;color:#e8d9a8;line-height:1}#entry .emono span{font-size:24px;margin:0 4px}#entry h1{font-size:20px;margin:6px 0 12px;color:#fff}
+#entry input{display:block;width:100%;box-sizing:border-box;font-size:16px;padding:12px;margin:8px 0;border-radius:10px;border:1px solid #ffffff33;background:#0006;color:#fff}
+#entry .erow{display:flex;gap:10px;margin:8px 0}#entry .erow.small{align-items:center;justify-content:center;flex-wrap:wrap;font-size:14px}#entry .erow.small input{display:inline-block;width:6.5em;margin:0 6px;padding:8px}
+#entry .ebig{flex:1;font-size:17px;font-weight:700;padding:13px;border:0;border-radius:12px;color:#fff;cursor:pointer;min-height:48px}#entry .ebig.green{background:#27ae60}#entry .ebig.blue{background:#2f80ed}
+#entry .ebig.huge{display:block;width:100%;font-size:22px;padding:20px;margin:10px 0}#entry .elink{background:none;border:0;color:#9cc7ff;text-decoration:underline;font-size:14px;padding:6px;cursor:pointer}
+#entry .note{color:#bbb;font-size:13px}
 </style></head><body class="app"><div id="app">
 <div id="topbar"><b class="ttl">♠ PLO5 Trainer</b><span id="gInfo" class="note"></span><span class="tb">
 <button class="sm" onclick="tg('drawer')">☰ Learn</button><button class="sm" onclick="tg('pLog')">Log</button><button class="sm" onclick="tg('pRep')">Replay</button><button class="sm" onclick="renderHist(0);tg('pHist')">History</button><button class="sm" onclick="renderWait();tg('pWait')">Waitlist</button><button class="sm" onclick="tg('pOnline')">🌐</button><button class="sm" onclick="tg('pOpt')">⚙</button><button class="sm" id="muteBtn" onclick="toggleMute()">🔊</button><button class="sm deal" id="gStart">Deal</button></span></div>
+<div id="entry" role="dialog" aria-label="Welcome"><div class="ebox"><div class="emono">ℜ<span>&amp;</span>ℜ</div><h1>Five-Card PLO</h1>
+<div id="eAuth"><p class="note">Log in to play live with real players. Solo play never needs an account.</p>
+<input id="eEmail" type="email" autocomplete="email" inputmode="email" placeholder="Email"><input id="ePass" type="password" autocomplete="current-password" placeholder="Password (8+ characters)">
+<div class="erow"><button class="ebig green" onclick="entryAuth('login')">Log in</button><button class="ebig blue" onclick="entryAuth('signup')">Sign up</button></div>
+<button class="elink" onclick="entryAuth('reset')">Forgot password?</button></div>
+<div id="eWho" style="display:none"><p>Logged in as <b id="eEmailShow"></b> · <button class="elink" onclick="entryAuth('logout')">Log out</button></p></div>
+<p id="eMsg" class="note" aria-live="polite"></p>
+<div id="eChoice"><button class="ebig green huge" onclick="entrySolo()">Play Solo</button>
+<button class="ebig blue huge" id="eLiveBtn" onclick="entryLive()">Play Live</button>
+<div id="eBuyRow" class="erow small"><label>Live buy-in <input id="eBuy" type="number" min="1" max="10000" value="200"></label><span class="note">up to 10,000/day</span></div>
+<button class="elink" onclick="entryWatch()">Watch the live table</button></div></div></div>
 <div id="stage"><div id="gTable" class="tablewrap"></div></div>
 <div id="hud"><div id="hudToast" onclick="document.getElementById('hud').classList.add('open')"></div><button id="hudTog" onclick="document.getElementById('hud').classList.toggle('open')">Odds ▴</button><div id="hudBody"><div id="gHint"></div><aside id="dash" class="dash"><p class="note">Deal a hand — your live equity appears here.</p></aside></div></div>
 <div id="bottom"><div id="gReplay" class="rvbar" style="display:none"><button onclick="stepReplay('pst')">⏮</button><button onclick="stepReplay('prev')">◀</button><button onclick="stepReplay('next')">▶</button><button onclick="stepReplay('nst')">⏭</button><label class="note" style="white-space:nowrap"><input type="checkbox" onchange="G.showFolded=this.checked;if(RV)showFrame()"> show folded hands</label><span id="gRvMsg"></span><button onclick="closeReplay()">✕</button></div><div id="gCtl"><div class="abar"><button class="raise" onclick="gStart.click()">Deal first hand</button></div></div></div>
@@ -296,6 +315,16 @@ function evalOmaha(h,b){
   return best;
 }
 function catOf(v){return Math.floor(v/1048576);}
+function bestOmaha(h,b){let best=-1,hole=null,brd=null;const hl=h.length,bl=b.length;
+  for(let i=0;i<hl;i++)for(let j=i+1;j<hl;j++)for(let x=0;x<bl;x++)for(let y=x+1;y<bl;y++)for(let z=y+1;z<bl;z++){const v=eval5(h[i],h[j],b[x],b[y],b[z]);if(v>best){best=v;hole=[h[i],h[j]];brd=[b[x],b[y],b[z]];}}
+  return {v:best,hole,brd};}
+const RNAME=["two","three","four","five","six","seven","eight","nine","ten","jack","queen","king","ace"],RPL=["twos","threes","fours","fives","sixes","sevens","eights","nines","tens","jacks","queens","kings","aces"];
+function handDesc(v){const c=catOf(v),k=v%1048576,t=(k>>16)&15,u=(k>>12)&15;
+  switch(c){case 8:return k===12?"a royal flush":`a straight flush, ${RNAME[k]} high`;case 7:return `four of a kind, ${RPL[t]}`;case 6:return `a full house, ${RPL[t]} full of ${RPL[u]}`;
+   case 5:return `a flush, ${RNAME[t]} high`;case 4:return `a straight, ${RNAME[k]} high`;case 3:return `three of a kind, ${RPL[t]}`;case 2:return `two pair, ${RPL[t]} and ${RPL[u]}`;case 1:return `a pair of ${RPL[t]}`;default:return `high card, ${RNAME[t]}`;}}
+function winLine(w){if(!w||!w.length)return "";if(w.length===1&&w[0].unc)return `${w[0].name} wins the pot`;
+  const named=w.map(x=>x.name);const same=w.every(x=>x.desc===w[0].desc);
+  if(w.length>1&&same)return `${named.join(" and ")} split the pot with ${w[0].desc}`;return w.map(x=>`${x.name} wins${w.length>1?" "+x.amt:""} with ${x.desc}`).join(" · ");}
 function shuffleDraw(deck,n){ // partial Fisher-Yates, returns first n
   for(let i=0;i<n;i++){const j=i+Math.floor(Math.random()*(deck.length-i));const t=deck[i];deck[i]=deck[j];deck[j]=t;}
 }
@@ -945,7 +974,9 @@ function gShowdown(){
       else{const b=Math.max(...elig.map(j=>vals[j]));const ws=elig.filter(j=>vals[j]===b);ws.forEach((j,k)=>won[j]+=Math.floor(part/ws.length)+(k===0?part%ws.length:0));}
       prev=lv;}
     won.forEach((w,j)=>{if(w)L(`${G.seats[j].name} wins ${w}.`);});}
-  G.winText=G.seats.map((s,j)=>won[j]>0?`${s.name} wins ${won[j]}`:null).filter(Boolean).join(" · ");G.winIdx=G.seats.map((s,j)=>won[j]>0?j:-1).filter(j=>j>=0);const u=G.seats[0];G.result=`${HERO()} ${won[0]-u.total>=0?"won":"lost"} ${Math.abs(won[0]-u.total)} chips this hand.`;
+  {const sd=live.length>1;G.winInfo=G.seats.map((s,j)=>{if(won[j]<=0)return null;if(!sd)return {seat:j,name:s.name,amt:won[j],unc:true};const b=bestOmaha(s.hand,G.board);return {seat:j,name:s.name,amt:won[j],desc:handDesc(b.v),cards:b.hole.concat(b.brd)};}).filter(Boolean);
+   G.winCards=sd?[].concat(...G.winInfo.map(w=>w.cards)):null;}
+  G.winText=winLine(G.winInfo);G.winIdx=G.seats.map((s,j)=>won[j]>0?j:-1).filter(j=>j>=0);const u=G.seats[0];G.result=`${HERO()} ${won[0]-u.total>=0?"won":"lost"} ${Math.abs(won[0]-u.total)} chips this hand.`;
   G.seats.forEach((s,j)=>{s.stack+=won[j];s.net+=won[j]-s.total;});
   if(!G.practice){try{statsHandEnd(won);}catch(e){}saveStacks();G.lastRec=recordHand(won);meterShowdown(won,live.length>1?G.seats.map(s=>s.folded?-1:evalOmaha(s.hand,G.board)):null);}if(won[0]>0)sfx("win");G.handOver=true;G.lastWon=won;autosave();(G.hands=G.hands||[]).push({no:G.handNo,frames:G.frames.slice(),result:G.result});G.ui&&G.ui.end();return "end";
 }
@@ -1038,8 +1069,9 @@ function tableHTML(st){ // st: {seats,board,button,pot,toAct,thinking,over,revea
     if(s.bet)h+=`<div class="bet" style="left:${bx}%;top:${by}%">${chips(s.bet)}</div>`;
     const mx=i===0?bx+14:(x+bx)/2+4,my=i===0?by:(y+by)/2;if(i===st.button)h+=`<div class="marker dealer" style="left:${mx}%;top:${my}%">D</div>`;
     else if(i===sb||i===bb)h+=`<div class="marker blind" style="left:${mx}%;top:${my}%">${i===sb?'SB':'BB'}</div>`;});
+  if(st.hl&&st.hl.length){h=h.replace('<div class="felt">','<div class="felt hl">');for(const c of st.hl)h=h.split(`data-c="${c}"`).join(`data-c="${c}" data-w="1"`);}
   return h+`</div>`;}
-function liveState(){const show=G.handOver&&liveSeats().length>1;return {seats:G.seats,board:G.board,button:G.button,pot:potTotal(),toAct:G.handOver?-1:G.toAct,thinking:G.thinking,revealAll:show,label:G.handOver?(G.winText?`<span class="winstrip">${G.winText}</span>`:""):STREETS[G.street]};}
+function liveState(){const show=G.handOver&&liveSeats().length>1;return {seats:G.seats,board:G.board,button:G.button,pot:potTotal(),toAct:G.handOver?-1:G.toAct,thinking:G.thinking,revealAll:show,hl:G.handOver&&show?G.winCards:null,label:G.handOver?(G.winText?`<span class="winstrip">${G.winText}</span>`:""):STREETS[G.street]};}
 function renderTable(){if(RV||!G.seats.length)return;$("gTable").innerHTML=tableHTML(liveState());try{cardAnims();}catch(e){}
   $("gInfo").innerHTML=`Hand #${G.handNo} · ${G.wait&&G.wait.length?"Waitlist: "+G.wait.join(", "):""} · Session net: <b class="${G.seats[0].net>=0?'good':'bad'}">${G.seats[0].net>=0?"+":""}${G.seats[0].net}</b>`;
   $("gLog").textContent=G.log.slice(-40).join("\n");$("gLog").scrollTop=1e9;}
@@ -1164,7 +1196,7 @@ async function mpTransport(){if(MP.mock)return MP.mock;const c=mpCfg();if(!c.url
 MP.DAY_CAP=10000;let SB=null;
 async function sbc(){if(MP.mock)return null;if(SB)return SB;const c=mpCfg();if(!c.url||!c.key)throw new Error("Online settings missing (Supabase URL + key).");
   const mod=await import("https://esm.sh/@supabase/supabase-js@2");SB=mod.createClient(c.url,c.key,{auth:{persistSession:true,detectSessionInUrl:true}});
-  SB.auth.onAuthStateChange((ev,ses)=>{MP.user=ses&&ses.user||null;if(ev==="PASSWORD_RECOVERY"){MP.recovery=true;authOpen();}authRender();});return SB;}
+  SB.auth.onAuthStateChange((ev,ses)=>{MP.user=ses&&ses.user||null;try{entryRender()}catch(e){}if(ev==="PASSWORD_RECOVERY"){MP.recovery=true;authOpen();}authRender();});return SB;}
 async function mpUser(){if(MP.mock)return MP.mockUser||null;const sb=await sbc();const {data}=await sb.auth.getSession();MP.user=data&&data.session&&data.session.user||null;return MP.user;}
 function mpApi(){if(MP.mock)return MP.mockApi;return {
   async createRoom(code){const {error}=await SB.rpc("mp_create_room",{p_code:code});if(error)throw new Error(error.message);},
@@ -1225,15 +1257,15 @@ function mpClient(tr,code,name,onState,onCards,opts){opts=opts||{};const C={seat
   return C;}
 // ---------- Browser UI glue ----------
 let MPC=null;
-function mpClientRender(C){const s=C.state;if(!s)return;const me=C.seat||0;if(s.over&&C.live){const d=C.seat!==null&&s.seats[C.seat]?s.seats[C.seat].delta:null;s.result=d===null?(s.status==='paused'?'Table paused — waiting for a player to sit':'Hand over'):d>0?`You won ${d}`:d<0?`You lost ${-d}`:'You broke even';}
+function mpClientRender(C){const s=C.state;if(!s)return;const me=C.seat||0;if(s.over&&C.live){const d=C.seat!==null&&s.seats[C.seat]?s.seats[C.seat].delta:null;s.result=d===null?(s.status==='paused'?'Table paused — waiting for a player to sit':'Hand over'):d>0?`You won ${d}`:d<0?`You lost ${-d}`:'You broke even';}const wl=s.over&&s.handNo?winLine(s.winInfo):'';
   const rot=i=>(i+me)%8;
   const seats=[0,1,2,3,4,5,6,7].map(d=>{const i=rot(d),x=s.seats[i];return {name:x.name+(x.away?" (away)":""),stack:x.stack,bet:x.bet,total:x.total,folded:x.folded,allin:x.allin,isUser:C.seat!==null&&i===C.seat,hand:C.seat!==null&&i===C.seat&&C.hand&&C.handNo===s.handNo?C.hand:(x.shown||[-1,-1,-1,-1,-1])};});
   G.meters=clampMeters(s.meters||G.meters);
-  $("gTable").innerHTML=tableHTML({seats,board:s.board,button:(s.button-me+8)%8,pot:s.pot,toAct:s.toAct<0?-1:(s.toAct-me+8)%8,thinking:-1,revealAll:false,label:s.over?s.result:STREETS[s.street]});
+  $("gTable").innerHTML=tableHTML({seats,board:s.board,button:(s.button-me+8)%8,pot:s.pot,toAct:s.toAct<0?-1:(s.toAct-me+8)%8,thinking:-1,revealAll:false,hl:s.over?s.winCards:null,label:s.over?(wl?`<span class="winstrip">${wl}</span>`:s.result):STREETS[s.street]});
   $("gInfo").innerHTML=`${C.live?"Live table <b>"+(s.name||C.code)+"</b>":"Online room <b>"+C.code+"</b>"} · ${C.seat===null?(C.queued?"joining":"watching"):"seat "+C.seat} · hand #${s.handNo}`+(C.today!==undefined?` · bought in today ${C.today}/${MP.DAY_CAP}`:"")+(C.note?` · ${C.note}`:"");
   if(C.seat!==null&&s.toAct===C.seat&&s.legal){const lg=s.legal;$("gCtl").innerHTML=`<div class="abar"><span class="tocall">To call <b>${lg.toCall}</b> · Pot <b>${lg.pot}</b></span>`+(lg.toCall>0?`<button class="fold" onclick="MPC.act('fold')">Fold</button><button onclick="MPC.act('call')">Call ${lg.toCall}</button>`:`<button onclick="MPC.act('check')">Check</button>`)+
     (lg.canRaise?`<span class="sizer"><button class="q" onclick="setAmt(${lg.minTo})">Min</button><button class="q" onclick="setAmt(${lg.maxTo})">Pot</button><input type="range" id="gAmt" min="${lg.minTo}" max="${lg.maxTo}" value="${lg.minTo}" oninput="gAmtL.textContent=this.value"><span id="gAmtL">${lg.minTo}</span><button class="raise" onclick="MPC.act('raise',+gAmt.value)">Raise to</button></span>`:"")+`</div>`;}
-  else $("gCtl").innerHTML=`<div class="abar"><span class="tocall">${C.seat===null?(C.queued?"You sit down at the next hand. ":C.left?"You left the table. ":"Watching — log in to take a seat. "):""}${s.over?s.result+(C.live?(s.status==="countdown"?" — next hand in a few seconds":""):" — waiting for host to deal"):"Waiting for "+((s.seats[s.toAct]||{}).name||"…")+"…"}</span>`+(C.seat!==null?`<button class="sm" onclick="mpUIRebuy()">Rebuy</button><button class="sm" onclick="MPC.leave()">Leave seat</button>`:"")+`</div>`;
+  else $("gCtl").innerHTML=`<div class="abar"><span class="tocall">${C.seat===null?(C.queued?"You sit down at the next hand. ":C.left?"You left the table. ":"Watching — log in to take a seat. "):""}${s.over?s.result+(C.live?(s.status==="countdown"?" — next hand in a few seconds":""):" — waiting for host to deal"):"Waiting for "+((s.seats[s.toAct]||{}).name||"…")+"…"}</span>`+(C.live&&C.seat!==null&&s.over&&s.handNo&&s.seats[C.seat]&&!s.seats[C.seat].shown&&C.hand&&C.handNo===s.handNo?`<button class="sm" id="showBtn" onclick="liveCall('show').catch(()=>{})">Show</button>`:"")+(C.seat!==null?`<button class="sm" onclick="mpUIRebuy()">Rebuy</button><button class="sm" onclick="MPC.leave()">Leave seat</button>`:"")+`</div>`;
   if(C.seat!==null&&typeof C.equity==="number"&&!s.over){const e=C.equity,n=C.vs||1;$("hudTog").innerHTML=`My equity <b>${pct(e)}</b> vs ${n} ▴`;$("dash").innerHTML=`<h3>My odds · ${STREETS[s.street]}</h3><div class="big">${pct(e)}</div><div>vs ${n} active · fair share ${pct(1/(n+1))}</div><p class="note">Computed on the server from your own cards only.</p>`;}}
 window.mpUIHost=async()=>{try{const r=await mpHost();$("mpOut").innerHTML=`Room <b>${r.code}</b> — share: <input readonly value="${r.link}" style="width:100%" onclick="this.select()"><p class="note">Logged-in players take an empty seat; empty seats stay bots.</p>`;
   const st=G.ui.street,en=G.ui.end;G.ui.street=function(){st();mpTick();};G.ui.end=function(){en();mpTick();};mpTick();}catch(e){$("mpOut").textContent="Couldn't host: "+e.message;if(/Log in/.test(e.message))authOpen();}};
@@ -1266,6 +1298,18 @@ window.liveUISit=async id=>{try{const u=await mpUser();if(!u){$("mpOut").textCon
   const name=$("mpName").value.trim()||(u.email||"Player").split("@")[0],buyin=+($("mpBuy")&&$("mpBuy").value)||200;await liveOpen(id,"seat",buyin,name);
   $("mpOut").innerHTML=`Joined <b>${LIVE.pub&&LIVE.pub.name||id}</b> as ${name} — bought in ${MPC.granted} (today ${MPC.today}/10000). You sit down at the next hand.`;tg("pOnline");}catch(e){$("mpOut").textContent="Couldn't join: "+e.message;}};
 window.liveUIWatch=async id=>{try{await liveOpen(id,"watch");$("mpOut").innerHTML=`Watching (no hole cards).`;tg("pOnline");}catch(e){$("mpOut").textContent="Couldn't watch: "+e.message;}};
+
+// ---------- Entry flow (main screen): log in / sign up, then Play Solo or Play Live ----------
+function entryShow(on){const e=$("entry");if(e)e.classList.toggle("hide",!on);}
+function entryRender(){const u=MP.user;$("eAuth").style.display=u?"none":"";$("eWho").style.display=u?"":"none";if(u)$("eEmailShow").textContent=u.email||"";$("eLiveBtn").textContent=u?"Play Live":"Play Live (log in first)";$("eBuyRow").style.display=u?"":"none";}
+window.entryAuth=async act=>{const m=$("eMsg");m.textContent="…";try{$("auEmail").value=$("eEmail").value.trim();$("auPass").value=$("ePass").value;await authUI(act);m.textContent=$("auMsg").textContent;}catch(e){m.textContent=e.message;}await mpUser().catch(()=>{});entryRender();};
+window.entrySolo=()=>{entryShow(false);try{if(history.replaceState&&/\/live\/?$/.test(location.pathname))history.replaceState(null,"","/");}catch(e){}};
+window.entryLive=async()=>{const u=await mpUser().catch(()=>null);if(!u){$("eMsg").textContent="Log in or sign up to take a live seat — or watch without one.";$("eEmail").focus();return;}
+  $("mpBuy").value=String(Math.max(1,Math.min(10000,+$("eBuy").value||200)));$("eMsg").textContent="Taking a seat at Main Table…";
+  try{await liveUISit("main");if(LIVE.table)entryShow(false);else $("eMsg").textContent=$("mpOut").textContent;}catch(e){$("eMsg").textContent=e.message;}};
+window.entryWatch=async()=>{await liveUIWatch("main");entryShow(false);};
+if(typeof location!=="undefined"&&typeof document!=="undefined"&&document.getElementById("entry")&&document.getElementById("entry").classList){
+  const solo=/[?&](room|solo)=/.test(location.search);if(solo)entryShow(false);else{setTimeout(()=>{entryRender();mpUser().then(()=>entryRender()).catch(()=>{});},30);}}
 // ---------- Login page (sheet; open with ?login) ----------
 function authOpen(){const e=$("pAuth");if(e&&!e.classList.contains("open"))tg("pAuth");authRender();}
 function authMsg(m){$("auMsg").textContent=m||"";}
@@ -1278,7 +1322,7 @@ window.authUI=async(act)=>{authMsg("…");try{const sb=await sbc(),em=$("auEmail
   else if(act==="logout"){if(MPC&&MPC.leave)try{await MPC.leave()}catch(e){}clearInterval(LIVE.timer);await sb.auth.signOut();MP.user=null;authMsg("Logged out.");}
   await mpUser();authRender();}catch(e){authMsg(e.message||String(e));}};
 window.authShow=async()=>{authOpen();try{await mpUser();authRender();}catch(e){authMsg(e.message);}};
-if(typeof location!=="undefined"){const lq=/[?&]login\b/.test(location.search)||/type=recovery|access_token/.test(location.hash);if(lq)setTimeout(()=>authShow(),60);else if(/room=/.test(location.search))setTimeout(()=>{mpUser().then(authRender).catch(()=>{})},60);}
+if(typeof location!=="undefined"){const lq=/type=recovery/.test(location.hash);if(lq)setTimeout(()=>{entryShow(false);authShow();},60);else if(/room=/.test(location.search))setTimeout(()=>{mpUser().then(authRender).catch(()=>{})},60);}
 if(typeof location!=="undefined"&&location.search){const m=location.search.match(/room=([A-Z0-9]{6})/i);if(m)setTimeout(()=>{$("mpCode").value=m[1].toUpperCase();tg("pOnline");},50);}
 
 function meterBtns(n){const m=G.meters&&G.meters[n];if(!m)return"";return `<span class="meters"><button class="mt" title="Drinks (tap +1, wraps at 9)" onclick="event.stopPropagation();bump('${n}','drink');renderWait()">🥂<i>${m.drink}</i></button><button class="mt crack" title="Tilt (tap +1, wraps at 9)" onclick="event.stopPropagation();bump('${n}','tilt');renderWait()">🫏<i>${m.tilt}</i></button></span>`;}

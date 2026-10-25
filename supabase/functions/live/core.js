@@ -31,6 +31,7 @@ export function apply(E,live,a,now){const G=E.G;E.setNow(now);const i=a.uid?seat
     live.pending.push({uid:a.uid,name:a.name,granted:a.granted,at:now});E.G.log.push(`${a.name} will sit down at the next hand.`);return {ok:true,queued:true};}
   if(a.type==="rebuy"){if(i<0){const p=live.pending.find(p=>p.uid===a.uid);if(p){p.granted+=a.granted;return {ok:true};}return {ok:false,error:"not seated"};}const r=G.seats[i].remote;
     if(a.granted>0){r.pending=(r.pending||0)+a.granted;r.buyins+=a.granted;G.log.push(`${r.name} rebuys ${a.granted} (today ${a.used}/${DAY_CAP}).`);}return {ok:true};}
+  if(a.type==="show"){if(i<0||!G.handOver||!G.handNo)return {ok:false,error:"nothing to show"};(live.shows=live.shows||{})[i]=G.handNo;G.log.push(`${G.seats[i].remote.name} shows ${G.seats[i].hand.map(E.cardStr).join(" ")}.`);return {ok:true};}
   if(a.type==="leave"){live.pending=live.pending.filter(p=>p.uid!==a.uid);if(i<0)return {ok:true};const r=G.seats[i].remote;r.leaving=true;G.log.push(`${r.name} is leaving after this hand.`);
     if(!G.handOver&&G.toAct===i){const lg=E.legal(i);E.gAct(i,lg.toCall>0?"fold":"check");safe(()=>E.gAdvance());E.flush();}return {ok:true};}
   if(a.type==="act"){if(i<0)return {ok:false,error:"not seated"};if(G.handOver||G.toAct!==i)return {ok:false,error:"not your turn"};
@@ -54,15 +55,19 @@ export function step(E,live,now){const G=E.G;E.setNow(now);
   if(!humansSeated(G)){live.status="paused";live.nextAt=0;return;}
   if(!live.nextAt){live.nextAt=now+COUNTDOWN_MS;live.status="countdown";return;}
   if(now<live.nextAt){live.status="countdown";return;}
-  live.nextAt=0;live.status="live";live.start={};
+  live.nextAt=0;live.status="live";live.start={};live.shows={};
   let r;safe(()=>{r=E.gNewHand();});if(r==="broke"){if(!E.mookRebuy(200)){E.newSession();}safe(()=>{r=E.gNewHand();});}E.flush();
   for(const s of G.seats)live.start[s.name]=(s.stack||0)+(s.total||0);
   if(G.handOver)live.nextAt=now+COUNTDOWN_MS;}
-export function publicState(E,live,id,name){const G=E.G;const sd=G.handOver&&G.seats.filter(x=>!x.folded).length>1;
+const CARDLINE=/^(.+): (?:[2-9TJQKA][shdc] ){4}[2-9TJQKA][shdc] — /;
+export function publicState(E,live,id,name){const G=E.G;const over=!!(G.handOver&&G.handNo);const sd=over&&G.seats.filter(x=>!x.folded).length>1;
+  const wi=over?(G.winInfo||[]):[];const winSeats=new Set(sd?wi.map(w=>w.seat):[]);const shows=live.shows||{};
+  const revealed=i=>over&&(winSeats.has(i)||shows[i]===G.handNo);const revNames=new Set(G.seats.filter((s,i)=>revealed(i)).map(s=>s.name));
+  const log=(G.log||[]).filter(l=>{const m=CARDLINE.exec(l);return !m||revNames.has(m[1]);}).slice(-14);
   return {id,name,status:live.status,nextAt:live.nextAt||0,handNo:G.handNo||0,button:G.button,board:G.board||[],street:G.street||0,pot:G.handNo?E.potTotal():0,toAct:G.handOver?-1:G.toAct,turnAt:G.turnAt||0,over:!!G.handOver,
-    log:(G.log||[]).slice(-14),meters:G.meters,humans:humansSeated(G),pending:live.pending.map(p=>p.name),
+    log,winInfo:over?wi:null,winCards:sd?(G.winCards||null):null,meters:G.meters,humans:humansSeated(G),pending:live.pending.map(p=>p.name),
     seats:G.seats.map((s,i)=>({name:s.name,stack:s.stack,bet:s.bet,total:s.total,folded:s.folded,allin:s.allin,human:!!s.remote,uid:s.remote?s.remote.uid:null,away:!!(s.remote&&s.remote.away),sitout:!!s.sitout,
-      delta:G.handOver&&live.start&&live.start[s.name]!==undefined?s.stack-live.start[s.name]:null,shown:sd&&!s.folded&&G.handNo?s.hand:null}))};}
+      delta:G.handOver&&live.start&&live.start[s.name]!==undefined?s.stack-live.start[s.name]:null,shown:revealed(i)?s.hand:null}))};}
 export function privateState(E,live,uid,iters){const G=E.G;const i=seatOf(G,uid);const pend=live.pending.find(p=>p.uid===uid);if(i<0)return {seat:null,queued:!!pend};
   const s=G.seats[i];const out={seat:i,hand:G.handNo?s.hand:null,handNo:G.handNo,legal:(!G.handOver&&G.toAct===i)?E.legal(i):null,buyins:s.remote.buyins,pendingChips:s.remote.pending||0};
   if(G.handNo&&!s.folded&&!G.handOver){const n=G.seats.filter((x,j)=>j!==i&&!x.folded).length;try{out.equity=n?E.equity(s.hand,G.board,n,iters||600):1;out.vs=n;}catch(e){}}
