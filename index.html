@@ -1303,7 +1303,7 @@ window.liveUIWatch=async id=>{try{await liveOpen(id,"watch");$("mpOut").innerHTM
 function entryShow(on){const e=$("entry");if(e)e.classList.toggle("hide",!on);}
 function entryRender(){const u=MP.user;$("eAuth").style.display=u?"none":"";$("eWho").style.display=u?"":"none";if(u)$("eEmailShow").textContent=u.email||"";$("eLiveBtn").textContent=u?"Play Live":"Play Live (log in first)";$("eBuyRow").style.display=u?"":"none";}
 window.entryAuth=async act=>{const m=$("eMsg");m.textContent="…";try{$("auEmail").value=$("eEmail").value.trim();$("auPass").value=$("ePass").value;await authUI(act);m.textContent=$("auMsg").textContent;}catch(e){m.textContent=e.message;}await mpUser().catch(()=>{});entryRender();};
-window.entrySolo=()=>{entryShow(false);try{if(history.replaceState&&/\/live\/?$/.test(location.pathname))history.replaceState(null,"","/");}catch(e){}};
+window.entrySolo=()=>{entryShow(false);if(G.pendingHero){G.pendingHero=0;openHeroPicker();}try{if(history.replaceState&&/\/live\/?$/.test(location.pathname))history.replaceState(null,"","/");}catch(e){}};
 window.entryLive=async()=>{const u=await mpUser().catch(()=>null);if(!u){$("eMsg").textContent="Log in or sign up to take a live seat — or watch without one.";$("eEmail").focus();return;}
   $("mpBuy").value=String(Math.max(1,Math.min(10000,+$("eBuy").value||200)));$("eMsg").textContent="Taking a seat at Main Table…";
   try{await liveUISit("main");if(LIVE.table)entryShow(false);else $("eMsg").textContent=$("mpOut").textContent;}catch(e){$("eMsg").textContent=e.message;}};
@@ -1350,7 +1350,7 @@ window.setHero=n=>{n=String(n||"").trim().slice(0,16).replace(/[<>&"'`]/g,"");if
   gInit();tableInit();$("pHero").classList.remove("open");
   $("gTable").innerHTML=tableHTML({seats:[HERO(),...G.table.map(x=>x||"—")].map((p,i)=>({name:p,stack:200,bet:0,hand:[],isUser:!i})),board:[],button:0,pot:0,toAct:-1,label:"Press Deal to start"});
   $("gCtl").innerHTML=`<div class="abar"><b>Playing as ${HERO()}.</b><button class="raise" onclick="gNewHand()">Deal first hand</button></div>`;renderSession();};
-{const _rp=resumePrompt;resumePrompt=function(){let has=false,hn=null;try{has=!!localStorage.getItem("plo5state");hn=localStorage.getItem("plo5hero");}catch(e){}if(!has&&!hn){openHeroPicker();return;}_rp();};}
+{const _rp=resumePrompt;resumePrompt=function(){let has=false,hn=null;try{has=!!localStorage.getItem("plo5state");hn=localStorage.getItem("plo5hero");}catch(e){}if(!has&&!hn){const en=document.getElementById("entry");if(en&&en.classList&&en.classList.contains&&!en.classList.contains("hide")){G.pendingHero=1;return;}openHeroPicker();return;}_rp();};}
 
 // ===== Action bar (thumb zone): Fold | Check/Call | Bet/Raise, expandable sizing row =====
 function sizeTo(lg,f){const s=G.seats[0];return Math.max(lg.minTo,Math.min(lg.maxTo,s.bet+lg.toCall+Math.round((lg.pot+lg.toCall)*f)));}
