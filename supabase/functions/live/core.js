@@ -14,7 +14,7 @@ export function makeEngine(src,cryptoObj){const S=stubs();const win={};
 nextIdx=function(i){for(let k=1;k<=8;k++){const j=(i+k)%8,s=G.seats[j];if(s&&s.remote&&!s.sitout)return j;}return (i+1)%8;};
 seatTable=function(){for(const s of G.seats){if(s.remote){s.name=s.remote.name;s.prof=null;}else{s.name="Empty";s.prof=null;s.stack=0;}}};
 {const _ls=loadStacks;loadStacks=function(){_ls();for(const s of G.seats)if(!s.remote){s.stack=0;s.folded=true;}};}
-trackEq=function(){};{const _q=quickOuts,M=new Map();quickOuts=function(h,b){const k=h.join(',')+'|'+b.join(',');if(M.has(k))return M.get(k);const v=_q(h,b);if(M.size>5000)M.clear();M.set(k,v);return v;};}{const _bd=botDecide;botDecide=function(i){if(__budget())throw __YIELD;return _bd(i);};}mpNewHandHook=function(){};mpAfterDeal=function(){};mpTick=function(){};try{sfx=function(){};}catch(e){}
+trackEq=function(){};{const _q=quickOuts,M=new Map();quickOuts=function(h,b){const k=h.join(',')+'|'+b.join(',');if(M.has(k))return M.get(k);const v=_q(h,b);if(M.size>5000)M.clear();M.set(k,v);return v;};}{const _bd=botDecide;botDecide=function(i){if(__budget())throw __YIELD;return _bd(i);};}mpNewHandHook=function(){};meterNewHand=function(){G.meters={};};meterShowdown=function(){G.meters={};};steamOn=function(){return false;};saveMeters=function(){};G.meters={};mpAfterDeal=function(){};mpTick=function(){};try{sfx=function(){};}catch(e){}
 G.rngNext=function(){return __rand();};
 return {G,gInit,gNewHand,gAdvance,gAct,legal,canAct,mookRebuy,newSession,bankOf,equity,potTotal,saveStacks,loadStacks,tableInit,HERO,PROFILES,cardStr,bankNets};}`;
   const rand=()=>{const a=new Uint32Array(2);cryptoObj.getRandomValues(a);return (a[0]*2**21+(a[1]>>>11))/2**53;};
@@ -71,7 +71,7 @@ export function publicState(E,live,id,name){const G=E.G;const over=!!(G.handOver
   const revealed=i=>over&&(winSeats.has(i)||shows[i]===G.handNo);const revNames=new Set(G.seats.filter((s,i)=>revealed(i)).map(s=>s.name));
   const log=(G.log||[]).filter(l=>{if(/^Empty\b|Waitlist:|Seat \d opens/.test(l))return false;const m=CARDLINE.exec(l);return !m||revNames.has(m[1]);}).slice(-14);
   return {id,name,status:live.status,nextAt:live.nextAt||0,handNo:G.handNo||0,button:G.button,board:G.board||[],street:G.street||0,pot:G.handNo?E.potTotal():0,toAct:G.handOver?-1:G.toAct,turnAt:G.turnAt||0,over:!!G.handOver,
-    log,winInfo:over?wi:null,winCards:sd?(G.winCards||null):null,meters:G.meters,humans:humansSeated(G),seated:humansSeated(G),open:8-humansSeated(G),pending:live.pending.map(p=>p.name),
+    log,winInfo:over?wi:null,winCards:sd?(G.winCards||null):null,meters:{},humans:humansSeated(G),seated:humansSeated(G),open:8-humansSeated(G),pending:live.pending.map(p=>p.name),
     seats:G.seats.map((s,i)=>({name:s.name,stack:s.stack,bet:s.bet,total:s.total,folded:s.folded,allin:s.allin,human:!!s.remote,uid:s.remote?s.remote.uid:null,away:!!(s.remote&&s.remote.away),sitout:!!s.sitout,
       delta:G.handOver&&live.start&&live.start[s.name]!==undefined?s.stack-live.start[s.name]:null,shown:revealed(i)?s.hand:null}))};}
 export function privateState(E,live,uid,iters){const G=E.G;const i=seatOf(G,uid);const pend=live.pending.find(p=>p.uid===uid);if(i<0)return {seat:null,queued:!!pend};
