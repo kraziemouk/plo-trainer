@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
     const prevSeen = (() => { try { const r = (row.state?.G?.seats || []).find((s: any) => s.remote && s.remote.uid === user?.id); return r ? r.remote.seenAt || 0 : 0; } catch (_) { return 0; } })();
     let res: any = { ok: true };
     const uid = user?.id;
-    if (op === "join") res = C.apply(E, live, { type: "join", uid, name: String(b.name || user!.email?.split("@")[0] || "Player").slice(0, 16).replace(/[<>&"']/g, ""), granted: charge.granted }, now);
+    if (op === "join") res = C.apply(E, live, { type: "join", uid, name: String(b.name || user!.email?.split("@")[0] || "Player").slice(0, 16).replace(/[<>&"']/g, ""), granted: charge.granted, seat: Number.isInteger(b.seat) ? b.seat : null }, now);
     else if (op === "rebuy") res = C.apply(E, live, { type: "rebuy", uid, granted: charge.granted, used: charge.used_today }, now);
     else if (op === "act") res = C.apply(E, live, { type: "act", uid, act: b.act, to: b.to }, now);
     else if (op === "leave") res = C.apply(E, live, { type: "leave", uid }, now);
