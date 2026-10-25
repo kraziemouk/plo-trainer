@@ -1260,7 +1260,7 @@ function mpClient(tr,code,name,onState,onCards,opts){opts=opts||{};const C={seat
   return C;}
 // ---------- Browser UI glue ----------
 let MPC=null;
-function mpClientRender(C){const s=C.state;if(!s)return;const me=C.seat||0;if(s.over&&C.live){const d=C.seat!==null&&s.seats[C.seat]?s.seats[C.seat].delta:null;s.result=d===null?((s.status==='paused'||s.status==='waiting')?`Waiting for players (${s.seated||0}/8)`:'Hand over'):d>0?`You won ${d}`:d<0?`You lost ${-d}`:'You broke even';}const wl=s.over&&s.handNo?winLine(s.winInfo):'';
+function mpClientRender(C){const s=C.state;if(!s)return;const me=C.seat||0;if(s.over&&C.live){const d=C.seat!==null&&s.seats[C.seat]?s.seats[C.seat].delta:null;s.result=d===null?((s.status==='paused'||s.status==='waiting')?`Waiting for players (${s.seated||0}/8)`:'Hand over'):d>0?`You won ${d}`:d<0?`You lost ${-d}`:'You broke even';}const wl=s.over&&s.handNo&&!(C.live&&(s.status==='paused'||s.status==='waiting'))?winLine(s.winInfo):'';
   const rot=i=>(i+me)%8;
   const seats=[0,1,2,3,4,5,6,7].map(d=>{const i=rot(d),x=s.seats[i];if(C.live&&!x.human)return {open:true,real:i,canSit:C.seat===null&&!C.queued,name:"Open seat",stack:0,bet:0,total:0,folded:true,allin:false,hand:[]};return {name:x.name+(x.away?" (away)":""),stack:x.stack,bet:x.bet,total:x.total,folded:x.folded,allin:x.allin,isUser:C.seat!==null&&i===C.seat,hand:C.seat!==null&&i===C.seat&&C.hand&&C.handNo===s.handNo?C.hand:(x.shown||[-1,-1,-1,-1,-1])};});
   G.meters=clampMeters(s.meters||G.meters);
@@ -1286,8 +1286,8 @@ const LIVE={table:null,me:null,pub:null,timer:null,ch:null,busy:false};
 async function liveCall(op,extra){const c=mpCfg();let tok=c.key;try{const sb=await sbc();const {data}=await sb.auth.getSession();if(data&&data.session)tok=data.session.access_token;}catch(e){}
   const r=await fetch(c.url+"/functions/v1/live",{method:"POST",headers:{"content-type":"application/json",apikey:c.key,authorization:"Bearer "+tok},body:JSON.stringify(Object.assign({op,table:LIVE.table},extra||{}))});
   const j=await r.json().catch(()=>({error:"Server error"}));if(j.pub)LIVE.pub=j.pub;if(j.me!==undefined&&j.me!==null)LIVE.me=j.me;if(!r.ok&&j.error){if(r.status===409&&op==="beat")return j;throw new Error(j.error);}liveRender();return j;}
-function liveRender(){const s=LIVE.pub;if(!s||!MPC||!MPC.live)return;const me=LIVE.me||{};MPC.state=Object.assign({},s,{legal:me.legal||null});MPC.seat=me.seat||null;MPC.hand=me.hand;MPC.handNo=me.handNo;MPC.equity=me.equity;MPC.vs=me.vs;MPC.queued=me.queued;mpClientRender(MPC);}
-function liveLoop(){clearInterval(LIVE.timer);LIVE.timer=setInterval(()=>{if(MPC)MPC.note=MPC.note==="busy, retry"?"":MPC.note;if(document.hidden&&!(LIVE.me&&LIVE.me.seat))return;const seated=LIVE.me&&(LIVE.me.seat||LIVE.me.queued);
+function liveRender(){const s=LIVE.pub;if(!s||!MPC||!MPC.live)return;const me=LIVE.me||{};MPC.state=Object.assign({},s,{legal:me.legal||null});MPC.seat=(me.seat===undefined||me.seat===null)?null:me.seat;MPC.hand=me.hand;MPC.handNo=me.handNo;MPC.equity=me.equity;MPC.vs=me.vs;MPC.queued=me.queued;mpClientRender(MPC);}
+function liveLoop(){clearInterval(LIVE.timer);LIVE.timer=setInterval(()=>{if(MPC)MPC.note=MPC.note==="busy, retry"?"":MPC.note;const hasSeat=!!LIVE.me&&LIVE.me.seat!==undefined&&LIVE.me.seat!==null;if(document.hidden&&!hasSeat)return;const seated=hasSeat||!!(LIVE.me&&LIVE.me.queued);
   if(LIVE.busy)return;if(seated){LIVE.busy=true;liveCall("beat").catch(e=>{MPC&&(MPC.note=e.message);}).finally(()=>LIVE.busy=false);}},1500);}
 async function liveOpen(table,mode,buyin,name){LIVE.table=table;LIVE.me=null;MP.role="live";MPC={live:true,code:table,name,seat:null,state:null,today:undefined,
   act:(t,to)=>liveCall("act",{act:t,to}).catch(e=>{MPC.note=e.message;liveRender();}),
