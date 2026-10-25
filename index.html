@@ -1296,8 +1296,8 @@ window.liveLobby=async()=>{const el=$("lobby");if(!el)return;el.innerHTML="Loadi
   el.innerHTML=(j.tables||[]).map(t=>`<div class="srow"><span><b>${t.name}</b> · ${t.humans} player${t.humans===1?"":"s"} · ${t.status==="paused"?"waiting for players":t.status}</span><span><button class="sm" onclick="liveUISit('${t.id}')">Sit</button> <button class="sm" onclick="liveUIWatch('${t.id}')">Watch</button></span></div>`).join("")||"No tables.";}catch(e){el.textContent="Couldn't load tables: "+e.message;}};
 window.liveUISit=async id=>{try{const u=await mpUser();if(!u){$("mpOut").textContent="Log in to take a seat (or Watch without one).";authOpen();return;}
   const name=$("mpName").value.trim()||(u.email||"Player").split("@")[0],buyin=+($("mpBuy")&&$("mpBuy").value)||200;await liveOpen(id,"seat",buyin,name);
-  $("mpOut").innerHTML=`Joined <b>${LIVE.pub&&LIVE.pub.name||id}</b> as ${name} — bought in ${MPC.granted} (today ${MPC.today}/10000). You sit down at the next hand.`;tg("pOnline");}catch(e){$("mpOut").textContent="Couldn't join: "+e.message;}};
-window.liveUIWatch=async id=>{try{await liveOpen(id,"watch");$("mpOut").innerHTML=`Watching (no hole cards).`;tg("pOnline");}catch(e){$("mpOut").textContent="Couldn't watch: "+e.message;}};
+  $("mpOut").innerHTML=`Joined <b>${LIVE.pub&&LIVE.pub.name||id}</b> as ${name} — bought in ${MPC.granted} (today ${MPC.today}/10000). You sit down at the next hand.`;$("pOnline").classList.remove("open");}catch(e){$("mpOut").textContent="Couldn't join: "+e.message;}};
+window.liveUIWatch=async id=>{try{await liveOpen(id,"watch");$("mpOut").innerHTML=`Watching (no hole cards).`;$("pOnline").classList.remove("open");}catch(e){$("mpOut").textContent="Couldn't watch: "+e.message;}};
 
 // ---------- Entry flow (main screen): log in / sign up, then Play Solo or Play Live ----------
 function entryShow(on){const e=$("entry");if(e)e.classList.toggle("hide",!on);}
