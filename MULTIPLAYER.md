@@ -1,3 +1,11 @@
+# Live tables (server-authoritative, no host)
+
+- Engine runs in the Supabase Edge Function `live` (supabase/functions/live): the same game + bot code as index.html (injected as engine_src.js) with a crypto RNG (crypto.getRandomValues). State lives in `mp_live` (RLS on, no client policies: hole cards never leave the server except to their owner). Public table state goes to `mp_live_pub` (readable by all, Realtime).
+- Ops: lobby, state, join, act, rebuy, leave, beat, tick. join/act/rebuy/leave need a logged-in user (JWT verified server-side); buy-ins are charged through `mp_charge` (service-role only; 10,000/day per user, America/Chicago).
+- Each seated player's ~1.5 s heartbeat returns public state + their own cards + server-computed equity. pg_cron `mp-live-tick` (every 5 s) calls tick only while a table has humans or isn't paused.
+- Hands start automatically 5 s after the previous one while any human is seated; empty tables pause but stay open. Join mid-hand = seated at the next hand. Turn timer 30 s (3 s when away); a player unseen for 60 s is removed and a bot takes the seat.
+- Signup: Edge Function `signup` creates pre-confirmed users (auth.admin.createUser, service key from the function env only), rate-limited 5/hour per IP and 30/min overall.
+
 # Live multiplayer (logged-in seats)
 
 - **Accounts:** Supabase Auth email + password. Account sheet: `https://mouk.ai/?login` (also 🌐 → 👤 Log in). Sign up, log in, log out, forgot password / set new password. Email confirmation is ON in this project.
